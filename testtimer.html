@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fraction Circle</title>
+
+<style>
+@property --percentage {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+body {
+  height: 100vh;
+  background-color: #0d1a29;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  font-family: Arial, sans-serif;
+}
+
+.chart {
+  --percentage: 0%;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    white var(--percentage),
+    #0d1a29 0
+  );
+  transition: --percentage 0.8s ease-out;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  position: relative;
+}
+
+
+</style>
+</head>
+
+<body>
+
+<div class="chart" id="chart">
+    10 sec
+
+
+</div>
+
+<script>
+const timeText = document.getElementById("chart").textContent.trim();
+
+// 2️⃣ Regex to parse number + unit
+const regex = /([0-9]+(?:\.[0-9]+)?)\s*(s(ec(onds)?)?|m(in(utes)?)?|h(our(s)?)?)/i;
+const match = timeText.match(regex);
+
+let totalTime; // in milliseconds
+
+if (match) {
+  const value = parseFloat(match[1]);
+  const unit = match[2].toLowerCase();
+
+  if (unit.startsWith("h")) { // hour(s)
+    totalTime = value * 60 * 60 * 1000;
+  } else if (unit.startsWith("m")) { // min / minutes
+    totalTime = value * 60 * 1000;
+  } else { // sec / second(s)
+    totalTime = value * 1000;
+  }
+
+  console.log("Total time in ms:", totalTime);
+} else {
+  console.error("No valid time found!");
+}
+
+const chart = document.getElementById("chart");
+let startTime = Date.now();
+
+function update() {
+  const elapsed = Date.now() - startTime;
+
+  const percent = Math.min((elapsed / totalTime) * 100, 100);
+
+  chart.style.setProperty("--percentage", percent + "%");
+
+  if (elapsed < totalTime) {
+    requestAnimationFrame(update);
+  }
+}
+
+update();
+</script>
+
+</body>
+</html>

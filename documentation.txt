@@ -1,0 +1,5 @@
+ <input class="label-input goal" placeholder="goal" value="${watch.goal}"
+          oninput="watches.find(w=>w.id===${watch.id}).label=this.value"> 
+i changes this code to be correct with the watch.goal value
+
+

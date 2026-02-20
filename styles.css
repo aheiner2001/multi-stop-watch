@@ -23,9 +23,7 @@ body {
   min-height: 100vh;
   padding: 40px 24px 80px;
 }
-input, textarea, select {
-  font-size: 16px;
-}
+
 
 header { text-align: center; margin-bottom: 48px; }
 header h1 { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
@@ -134,6 +132,9 @@ header p { font-size: 13px; color: var(--text-muted); }
   align-items: center;
   gap: 8px;
 }
+input, textarea, select {
+  font-size: 16px;
+}
 /* 📱 Mobile styles */
 @media (max-width: 768px) {
 
@@ -156,5 +157,7 @@ header p { font-size: 13px; color: var(--text-muted); }
   .time-display {
     font-size: 1.5rem;
   }
-
+input, textarea, select {
+  font-size: 16px;
+}
 }

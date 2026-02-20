@@ -131,3 +131,27 @@ header p { font-size: 13px; color: var(--text-muted); }
   align-items: center;
   gap: 8px;
 }
+/* 📱 Mobile styles */
+@media (max-width: 768px) {
+
+  .container {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .timer-wrapper {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .progress-circle {
+    width: 80px;
+    height: 80px;
+  }
+
+  .time-display {
+    font-size: 1.5rem;
+  }
+
+}

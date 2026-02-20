@@ -7,24 +7,38 @@ function loadWatches() {
   if (!saved) return;
 
   const savedWatches = JSON.parse(saved);
+
   savedWatches.forEach(w => {
-    // Recalculate elapsed if timer was running
-    if (w.running && w.startTime) {
-      const delta = Date.now() - w.startTime;
-      w.elapsed += delta;
-      w.startTime = Date.now(); // reset startTime to now
-    }
-    watches.push({
+
+    const watch = {
       ...w,
-      interval: null // interval will start only if toggled
-    });
-    if (w.id > idCounter) idCounter = w.id;
-    renderCard(w);
-    updateDisplay(w.id); // update timer immediately
+      interval: null
+    };
+
+    watches.push(watch);
+
+    if (watch.id > idCounter) idCounter = watch.id;
+
+    renderCard(watch);
+
+    // If it was running before refresh
+    if (watch.running && watch.startTime) {
+
+      // Recalculate elapsed time
+      const delta = Date.now() - watch.startTime;
+      watch.elapsed += delta;
+
+      // Restart it cleanly
+      watch.startTime = Date.now();
+      watch.interval = setInterval(() => tick(watch.id), 50);
+    }
+
+    updateDisplay(watch.id);
+    updateToggleBtn(watch);
   });
+
   document.getElementById('empty')?.remove();
 }
-
 // Save watches to localStorage
 function saveWatches() {
   const dataToSave = watches.map(w => ({

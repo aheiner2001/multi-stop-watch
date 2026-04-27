@@ -3,28 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stopwatches</title>
+<title>Utah Study Hours Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header>
-  <h1>Stopwatches</h1>
-  <p>Track multiple tasks independently</p>
+<header class="site-header">
+  <h1>Utah Study Hours Tracker</h1>
+  <p class="header-caption">All dates, week boundaries, and timers use <strong>America/Denver</strong>. Weeks start on <strong>Sunday</strong> and reset logged hours for each course.</p>
 </header>
 
-<button class="add-btn" onclick="addWatch()">
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  </svg>
-  Add Stopwatch
-</button>
+<section class="clock-strip" aria-live="polite">
+  <div class="clock-strip__main">
+    <p class="clock-strip__time" id="utah-clock">—</p>
+    <p class="clock-strip__meta" id="day-metrics">—</p>
+  </div>
+  <button type="button" class="btn-secondary" id="btn-refresh-time">Refresh time</button>
+</section>
 
-<div class="grid" id="grid">
-  <div class="empty" id="empty">No stopwatches yet. Add one above.</div>
+<p class="policy-caption">
+  <strong>Friday</strong> is a good day to lock in weekly targets before the weekend.
+  <strong>Saturday</strong> can carry unfinished work forward into the week’s final stretch.
+  <strong>Sunday</strong> is lighter on “core” scheduling: recommended hours spread across the coming Mon–Sat instead.
+</p>
+
+<div class="global-actions">
+  <button type="button" class="btn-danger-outline" id="btn-reset-week">Reset this week</button>
 </div>
 
+<div id="courses" class="courses"></div>
+
+<script src="study-logic.js"></script>
 <script src="jscript.js"></script>
 </body>
 </html>

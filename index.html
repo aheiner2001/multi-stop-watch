@@ -10,8 +10,7 @@
 <body>
 
 <header class="site-header">
-  <h1>Utah Study Hours Tracker</h1>
-  <p class="header-caption">All dates, week boundaries, and timers use <strong>America/Denver</strong>. Weeks start on <strong>Sunday</strong> and reset logged hours for each course.</p>
+  <h1>Study Hours and Pomodoro</h1>
 </header>
 
 <section class="clock-strip" aria-live="polite">
@@ -23,14 +22,16 @@
 </section>
 
 <p class="policy-caption">
-  <strong>Friday</strong> is a good day to lock in weekly targets before the weekend.
+  <!-- <strong>Friday</strong> is a good day to lock in weekly targets before the weekend.
   <strong>Saturday</strong> can carry unfinished work forward into the week’s final stretch.
-  <strong>Sunday</strong> is lighter on “core” scheduling: recommended hours spread across the coming Mon–Sat instead.
+  <strong>Sunday</strong> is lighter on “core” scheduling: recommended hours spread across the coming Mon–Sat instead. -->
 </p>
 
 <div class="global-actions">
   <button type="button" class="btn-danger-outline" id="btn-reset-week">Reset this week</button>
 </div>
+
+<section class="class-overview" id="class-overview" aria-label="Class time overview"></section>
 
 <!-- Put your alarm file at sounds/pomo-alarm.mp3 (or change src). OGG/WAV also work. -->
 <audio id="pomo-alarm" src="sounds/pomo-alarm.mp3" preload="auto"></audio>

@@ -421,6 +421,70 @@ select {
   justify-content: flex-end;
 }
 
+.class-overview {
+  max-width: 960px;
+  margin: 0 auto 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+.class-overview__item {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.class-overview__item:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.class-overview__item--good {
+  border-color: rgba(61, 214, 140, 0.5);
+}
+.class-overview__name {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  min-height: 2.2em;
+}
+.class-overview__ring {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: conic-gradient(var(--green) calc(var(--pct) * 1%), #ffffff calc(var(--pct) * 1%) 100%);
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.class-overview__ring::after {
+  content: '';
+  position: absolute;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: rgba(13, 27, 42, 0.9);
+  border: 1px solid var(--border);
+}
+.class-overview__ring-text {
+  position: relative;
+  z-index: 1;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text);
+}
+.class-overview__status {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
 .courses {
   max-width: 960px;
   margin: 0 auto;

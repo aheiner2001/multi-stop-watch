@@ -227,9 +227,37 @@ function buildCourseArticleHtml(idx) {
 </article>`;
 }
 
+function buildCourseOverviewItemHtml(idx) {
+  const course = COURSES[idx];
+  const name = course.name;
+  const co = state.courses[name];
+  const weekStart = state.week_start;
+  const goal = course.weekly_goal_hours;
+  const done = weeklyTotalHours(co, weekStart);
+  const remaining = Math.max(0, goal - done);
+  const pct = goal > 0 ? Math.min(100, (done / goal) * 100) : 0;
+  const status = remaining > 0.01 ? 'Needs time' : 'On track';
+  return `
+<button type="button" class="class-overview__item${remaining <= 0.01 ? ' class-overview__item--good' : ''}" data-action="jump-course" data-course-index="${idx}" aria-label="${esc(name)}: ${status}, ${formatHoursMinutes(remaining)} remaining this week">
+  <p class="class-overview__name">${esc(name)}</p>
+  <div class="class-overview__ring" style="--pct:${pct.toFixed(1)}">
+    <span class="class-overview__ring-text">${formatHoursMinutes(remaining)}</span>
+  </div>
+  <p class="class-overview__status">${status}</p>
+</button>`;
+}
+
+function renderClassOverview() {
+  const root = document.getElementById('class-overview');
+  if (!root || !state) return;
+  const blocks = COURSES.map((_, idx) => buildCourseOverviewItemHtml(idx));
+  root.innerHTML = blocks.join('');
+}
+
 function renderCourses() {
   const root = document.getElementById('courses');
   if (!root || !state) return;
+  renderClassOverview();
   stopAllCourseTimerIntervals();
   const blocks = COURSES.map((_, idx) => buildCourseArticleHtml(idx));
   root.innerHTML = blocks.join('');
@@ -275,6 +303,7 @@ function replaceCourseCard(idx) {
     return;
   }
   art.outerHTML = buildCourseArticleHtml(idx);
+  renderClassOverview();
   syncCourseTimerIntervals();
 }
 
@@ -755,6 +784,18 @@ function onCoursesChange(e) {
   replaceCourseCard(idx);
 }
 
+function onClassOverviewClick(e) {
+  const target = e.target instanceof Element ? e.target : null;
+  if (!target) return;
+  const btn = target.closest('[data-action="jump-course"]');
+  if (!btn) return;
+  const idx = Number(btn.dataset.courseIndex);
+  if (!Number.isFinite(idx)) return;
+  const card = document.querySelector(`article[data-course-index="${idx}"]`);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function onResetWeek() {
   if (!confirm('Clear this week’s logged hours and timers for all courses? This cannot be undone.')) return;
   state = buildDefaultState();
@@ -770,6 +811,7 @@ document.getElementById('btn-reset-week')?.addEventListener('click', onResetWeek
 
 document.getElementById('courses')?.addEventListener('click', onCoursesClick);
 document.getElementById('courses')?.addEventListener('change', onCoursesChange);
+document.getElementById('class-overview')?.addEventListener('click', onClassOverviewClick);
 
 initPomoStripControls();
 fullRender();

@@ -3,7 +3,7 @@
  * America/Denver via Intl; Sunday-start week; no external deps.
  */
 const UTAH_TZ = 'America/Denver';
-const POMODORO_MINUTES = 45;
+const POMODORO_MINUTES = 40;
 const POMODORO_HOURS = POMODORO_MINUTES / 60;
 const STATE_KEY = 'utah_study_tracker_state';
 
@@ -311,4 +311,20 @@ function startTimer(state, courseName) {
   if (!co || co.running) return;
   co.running = true;
   co.running_start_iso = new Date().toISOString();
+}
+
+/** Stop every other course’s timer, then start this one. Returns course indices that were cleared. */
+function startExclusiveTimerByIndex(state, idx) {
+  const cleared = [];
+  if (!state || idx < 0 || idx >= COURSES.length) return cleared;
+  for (let i = 0; i < COURSES.length; i++) {
+    if (i === idx) continue;
+    const co = state.courses[COURSES[i].name];
+    if (co && co.running) {
+      cleared.push(i);
+      clearRunningTimer(co);
+    }
+  }
+  startTimer(state, COURSES[idx].name);
+  return cleared;
 }

@@ -13,6 +13,7 @@ const COURSES = [
   { name: 'Algorithms', weekly_goal_hours: 8 },
   { name: 'Massively Parallel Computation', weekly_goal_hours: 8 },
   { name: 'Old Testament', weekly_goal_hours: 6 },
+  { name: 'Peronal Study', weekly_goal_hours: 3 },
 ];
 
 function ymdInDenver(ms) {

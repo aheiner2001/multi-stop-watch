@@ -985,31 +985,73 @@
         });
     }
 
-    if (saveFoodForm) saveFoodForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('new-food-name').value.trim();
-        const per100g = {
-            calories: parseFloat(document.getElementById('new-food-cal').value),
-            protein: parseFloat(document.getElementById('new-food-protein').value) || 0,
-            carbs: parseFloat(document.getElementById('new-food-carbs').value) || 0,
-            fat: parseFloat(document.getElementById('new-food-fat').value) || 0
+    function servingToPer100g(servingGrams, serving) {
+        const factor = 100 / servingGrams;
+        return {
+            calories: Math.round(serving.calories * factor),
+            protein: Math.round(serving.protein * factor * 10) / 10,
+            carbs: Math.round(serving.carbs * factor * 10) / 10,
+            fat: Math.round(serving.fat * factor * 10) / 10
         };
-        if (!name || !per100g.calories || per100g.calories <= 0) return;
+    }
 
-        const existing = foodLibrary.find(f => f.name.toLowerCase() === name.toLowerCase());
-        if (existing) {
-            existing.per100g = per100g;
-        } else {
-            foodLibrary.push({ id: makeId(), name, per100g });
+    function updateNewFoodPer100Preview() {
+        const preview = document.getElementById('new-food-per100-preview');
+        if (!preview) return;
+
+        const servingGrams = parseFloat(document.getElementById('new-food-grams')?.value);
+        const serving = {
+            calories: parseFloat(document.getElementById('new-food-cal')?.value),
+            protein: parseFloat(document.getElementById('new-food-protein')?.value) || 0,
+            carbs: parseFloat(document.getElementById('new-food-carbs')?.value) || 0,
+            fat: parseFloat(document.getElementById('new-food-fat')?.value) || 0
+        };
+
+        if (!servingGrams || servingGrams <= 0 || !serving.calories || serving.calories <= 0) {
+            preview.textContent = 'Per 100g: enter serving size and macros above.';
+            return;
         }
 
-        saveFoodLibrary();
-        saveFoodForm.reset();
-        document.getElementById('new-food-carbs').value = '0';
-        document.getElementById('new-food-fat').value = '0';
-        renderFoodLibrary();
-        renderFoodRecommendations();
-    });
+        const per100g = servingToPer100g(servingGrams, serving);
+        preview.textContent = `Per 100g: ${per100g.calories} cal · ${per100g.protein}g P · ${per100g.carbs}g C · ${per100g.fat}g F`;
+    }
+
+    if (saveFoodForm) {
+        ['new-food-grams', 'new-food-cal', 'new-food-protein', 'new-food-carbs', 'new-food-fat'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.addEventListener('input', updateNewFoodPer100Preview);
+        });
+
+        saveFoodForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('new-food-name').value.trim();
+            const servingGrams = parseFloat(document.getElementById('new-food-grams').value);
+            const serving = {
+                calories: parseFloat(document.getElementById('new-food-cal').value),
+                protein: parseFloat(document.getElementById('new-food-protein').value) || 0,
+                carbs: parseFloat(document.getElementById('new-food-carbs').value) || 0,
+                fat: parseFloat(document.getElementById('new-food-fat').value) || 0
+            };
+            if (!name || !servingGrams || servingGrams <= 0 || !serving.calories || serving.calories <= 0) return;
+
+            const per100g = servingToPer100g(servingGrams, serving);
+            const existing = foodLibrary.find(f => f.name.toLowerCase() === name.toLowerCase());
+            if (existing) {
+                existing.per100g = per100g;
+            } else {
+                foodLibrary.push({ id: makeId(), name, per100g });
+            }
+
+            saveFoodLibrary();
+            saveFoodForm.reset();
+            document.getElementById('new-food-grams').value = '100';
+            document.getElementById('new-food-carbs').value = '0';
+            document.getElementById('new-food-fat').value = '0';
+            updateNewFoodPer100Preview();
+            renderFoodLibrary();
+            renderFoodRecommendations();
+        });
+    }
 
     if (inputGrams) inputGrams.addEventListener('input', updateQuickLogPreview);
     if (addFoodEntryBtn) addFoodEntryBtn.addEventListener('click', addFoodEntry);

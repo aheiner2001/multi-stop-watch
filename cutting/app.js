@@ -1302,24 +1302,100 @@
         });
     }
 
+    const GRAPH_VIEW_KEY = 'cutting_graph_view';
+    let graphView = localStorage.getItem(GRAPH_VIEW_KEY) || 'weekly';
+    const graphViewBtns = document.querySelectorAll('[data-graph-view]');
+    const chartSubtitle = document.getElementById('chart-subtitle');
+
+    function shortDateLabel(iso) {
+        const [, m, d] = iso.split('-');
+        return `${parseInt(m, 10)}/${parseInt(d, 10)}`;
+    }
+
+    function buildPeriodAverages(logs, periodDays) {
+        if (!logs.length) return [];
+        const sorted = [...logs].sort((a, b) => a.date.localeCompare(b.date));
+        const anchor = getWeekStartISO(sorted[0].date);
+        const anchorTime = new Date(anchor + 'T12:00:00').getTime();
+        const msPerDay = 86400000;
+        const buckets = new Map();
+
+        sorted.forEach(log => {
+            const logTime = new Date(log.date + 'T12:00:00').getTime();
+            const daysSince = Math.floor((logTime - anchorTime) / msPerDay);
+            const periodIndex = Math.floor(daysSince / periodDays);
+            if (!buckets.has(periodIndex)) {
+                buckets.set(periodIndex, {
+                    periodIndex,
+                    startDate: addDaysISO(anchor, periodIndex * periodDays),
+                    weights: []
+                });
+            }
+            buckets.get(periodIndex).weights.push(log.weight);
+        });
+
+        return Array.from(buckets.values())
+            .sort((a, b) => a.periodIndex - b.periodIndex)
+            .map(b => ({
+                startDate: b.startDate,
+                endDate: addDaysISO(b.startDate, periodDays - 1),
+                weight: b.weights.reduce((sum, w) => sum + w, 0) / b.weights.length,
+                dayCount: b.weights.length
+            }));
+    }
+
+    function periodChartLabel(point, periodDays) {
+        if (periodDays === 14) {
+            return `${shortDateLabel(point.startDate)}–${shortDateLabel(point.endDate)}`;
+        }
+        return shortDateLabel(point.startDate);
+    }
+
+    function setGraphView(view) {
+        graphView = view;
+        localStorage.setItem(GRAPH_VIEW_KEY, view);
+        graphViewBtns.forEach(btn => {
+            const active = btn.dataset.graphView === view;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        if (chartSubtitle) {
+            chartSubtitle.textContent = view === 'weekly'
+                ? 'Weekly averages from daily weigh-ins'
+                : 'Bi-weekly averages from daily weigh-ins';
+        }
+        renderGraph();
+    }
+
+    graphViewBtns.forEach(btn => {
+        btn.addEventListener('click', () => setGraphView(btn.dataset.graphView));
+    });
+
     function renderGraph() {
         if (!svg) return;
         svg.innerHTML = '';
         if (userLogs.length === 0) return;
 
+        const periodDays = graphView === 'biweekly' ? 14 : 7;
+        const periodLabel = graphView === 'biweekly' ? 'Bi-week' : 'Week';
+        const points = buildPeriodAverages(userLogs, periodDays);
+        if (points.length === 0) return;
+
         const width = 600;
         const height = 260;
         const padding = 40;
 
-        const weights = userLogs.map(l => l.weight);
+        const weights = points.map(p => p.weight);
         const maxW = Math.max(...weights, TARGET_WEIGHT) + 1;
         const minW = Math.min(...weights, TARGET_WEIGHT) - 1;
-        const stepX = (width - padding * 2) / Math.max(userLogs.length - 1, 1);
+        const stepX = (width - padding * 2) / Math.max(points.length - 1, 1);
 
         function getX(index) { return padding + index * stepX; }
         function getY(weight) {
             return height - padding - ((weight - minW) / (maxW - minW)) * (height - padding * 2);
         }
+
+        svg.setAttribute('aria-label', `${periodLabel} weight averages chart`);
 
         for (let w = Math.floor(minW); w <= maxW; w += 5) {
             if (w < minW || w > maxW) continue;
@@ -1337,22 +1413,27 @@
         `;
 
         let pathD = '';
-        userLogs.forEach((log, index) => {
+        points.forEach((point, index) => {
             const x = getX(index);
-            const y = getY(log.weight);
+            const y = getY(point.weight);
             pathD += index === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
         });
 
-        if (userLogs.length > 1) {
+        if (points.length > 1) {
             svg.innerHTML += `<path class="graph-line" d="${pathD}" />`;
         }
 
-        userLogs.forEach((log, index) => {
+        points.forEach((point, index) => {
             const x = getX(index);
-            const y = getY(log.weight);
+            const y = getY(point.weight);
+            const label = periodChartLabel(point, periodDays);
+            const tooltip = `${periodLabel} of ${formatDisplayDate(point.startDate)}: ${point.weight.toFixed(1)} lbs avg (${point.dayCount} day${point.dayCount === 1 ? '' : 's'})`;
+            const labelX = graphView === 'biweekly' ? x - 28 : x - 12;
             svg.innerHTML += `
-                <circle class="graph-dots" cx="${x}" cy="${y}" r="4" title="Day ${log.day}: ${log.weight} lbs" />
-                <text class="graph-text" x="${x - 10}" y="${height - 15}">D${log.day}</text>
+                <circle class="graph-dots" cx="${x}" cy="${y}" r="4">
+                    <title>${tooltip}</title>
+                </circle>
+                <text class="graph-text" x="${labelX}" y="${height - 15}">${label}</text>
             `;
         });
     }
@@ -1953,7 +2034,8 @@
         renderMaintenanceView();
         setFormForNewDay();
         renderTable();
-        renderGraph();
+        if (graphViewBtns.length) setGraphView(graphView);
+        else renderGraph();
         updateMetrics();
         renderWeeklyMaxes();
         renderMedicalBanner();

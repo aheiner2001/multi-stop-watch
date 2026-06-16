@@ -119,7 +119,14 @@
                     </div>
 
                     <div class="card chart-card span-2">
-                        <h2>Weight Progress <span class="card-subtitle">Program trend</span></h2>
+                        <h2>
+                            Weight Progress
+                            <span class="card-actions graph-view-toggle" role="group" aria-label="Chart averaging">
+                                <button type="button" class="graph-view-btn active" data-graph-view="weekly" aria-pressed="true">Weekly avg</button>
+                                <button type="button" class="graph-view-btn" data-graph-view="biweekly" aria-pressed="false">Bi-weekly avg</button>
+                            </span>
+                        </h2>
+                        <p class="card-subtitle" id="chart-subtitle">Weekly averages from daily weigh-ins</p>
                         <div class="graph-container">
                             <svg id="weight-svg" viewBox="0 0 600 260" preserveAspectRatio="none" role="img" aria-label="Weight progress chart"></svg>
                         </div>

@@ -1,0 +1,9 @@
+Huberman Lab Essentials — Fat Loss (full transcript)
+================================================================
+
+Save the full timestamped transcript here. Curated chunks live in:
+  youtube-chunks/
+  youtube-extracted/
+
+The transcript was processed into 13 topic chunks while the on-disk file was empty.
+Re-paste your full video text here and run: python3 split-transcript.py

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#122d52">
+    <meta name="color-scheme" content="light">
+    <link rel="icon" href="items/home.png" type="image/png">
+    <title>Reverse Diet — The Cut</title>
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="plan">
+
+<div class="app-shell">
+    <aside class="sidebar" id="app-sidebar" aria-label="Site navigation"></aside>
+
+    <main class="main-panel" id="main-content" tabindex="-1">
+        <header class="topbar">
+            <div class="topbar-greeting">
+                <h1><span class="text-accent">Reverse</span> Diet</h1>
+                <p>Maintenance engine after goal weight</p>
+            </div>
+            <div class="topbar-meta">
+                <span class="goal-badge" id="goal-badge">1,250 cal · 48h fast 2×/mo</span>
+                <span class="date-pill" id="header-date"></span>
+            </div>
+        </header>
+
+        <section class="dashboard" aria-label="Page content">
+
+            <div class="goal-banner" id="goal-banner" style="display:none">
+                <div>
+                    <h3>🎯 Goal Reached — 160 lbs</h3>
+                    <p>Don't stop cold. Initiate your Reverse Diet to lock in your new set-point safely.</p>
+                </div>
+                <button type="button" class="btn-success" id="initiate-maintenance-btn">Initiate Maintenance</button>
+            </div>
+            <div class="maintenance-page">
+<div class="view-panel active">
+                <div class="maintenance-hero" id="maintenance-hero">
+                    <span class="phase-badge" id="phase-badge">Reverse Diet</span>
+                    <h2>Reverse-Diet Engine</h2>
+                    <p>Your landing runway after the cut. Gradually step calories up so metabolism recovers without fat spillover.</p>
+                    <div class="lock-badge" id="lock-badge" style="display:none">🔒 Set-Point Locked</div>
+                    <div class="maintenance-stats" id="maintenance-stats"></div>
+                </div>
+
+                <div class="card" id="maintenance-setup" style="text-align:center;padding:40px">
+                    <h2>Not Yet Initiated</h2>
+                    <p style="color:var(--text-muted);margin:12px 0 20px">Reach 160 lbs on the <a href="daily.html#log">Daily Hub</a>, then click <strong>Initiate Maintenance</strong> to generate your 4-week reverse diet plan.</p>
+                    <p style="font-size:0.85rem;color:var(--text-muted)">Current weight: <strong id="setup-current-weight">—</strong></p>
+                </div>
+
+                <div id="maintenance-active" style="display:none">
+                    <div class="card">
+                        <h2>4-Week Calorie Step-Up <span class="card-subtitle">+100–150 cal per week</span></h2>
+                        <div class="reverse-weeks" id="reverse-weeks"></div>
+                    </div>
+
+                    <div class="safe-range-panel">
+                        <h2 style="margin-bottom:4px;font-size:1rem">Maintenance Guardrails</h2>
+                        <p style="font-size:0.85rem;color:var(--text-muted)">Safe range: <strong>158 – 163 lbs</strong>. Stay inside the green zone to protect your new set-point.</p>
+                        <div class="safe-range-bar" id="safe-range-bar">
+                            <div class="safe-range-zone" id="safe-range-zone"></div>
+                            <div class="safe-range-marker" id="weight-marker" data-label="You"></div>
+                        </div>
+                        <div class="safe-range-labels">
+                            <span>150</span>
+                            <span>158</span>
+                            <span>160</span>
+                            <span>163</span>
+                            <span>170</span>
+                        </div>
+                        <div class="mini-cut-alert" id="mini-cut-alert">
+                            <h4>⚠ Mini-Cut Alert</h4>
+                            <p>You're above <strong>163 lbs</strong>. Run a gentle 1-week mini-cut at <strong id="mini-cut-cal">1,250</strong> cal/day to nip regain before it sticks. Keep protein high and continue resistance training.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Stability Tracker <span class="card-subtitle">Weight vs locked set-point</span></h2>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Reverse Week</th>
+                                        <th>Target Cal</th>
+                                        <th>Avg Weight</th>
+                                        <th>vs Lock</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stability-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="nav.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

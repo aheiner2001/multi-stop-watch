@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#122d52">
+    <meta name="color-scheme" content="light">
+    <link rel="icon" href="items/home.png" type="image/png">
+    <title>Daily Hub — The Cut</title>
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="daily">
+
+<div class="app-shell">
+    <aside class="sidebar" id="app-sidebar" aria-label="Site navigation"></aside>
+
+    <main class="main-panel" id="main-content" tabindex="-1">
+        <header class="topbar">
+            <div class="topbar-greeting">
+                <h1>Daily <span class="text-accent">Hub</span></h1>
+                <p>Log · food · NEAT · protocols</p>
+            </div>
+            <div class="topbar-meta">
+                <span class="goal-badge" id="goal-badge">1,250 cal · 48h fast 2×/mo</span>
+                <span class="date-pill" id="header-date"></span>
+            </div>
+        </header>
+
+        <section class="dashboard" aria-label="Daily tracking">
+
+            <div class="goal-banner" id="goal-banner" style="display:none">
+                <div>
+                    <h3>Goal Reached — 160 lbs</h3>
+                    <p>Don't stop cold. Initiate your Reverse Diet to lock in your new set-point safely.</p>
+                </div>
+                <button type="button" class="btn-success" id="initiate-maintenance-btn">Initiate Maintenance</button>
+            </div>
+
+            <div class="metrics-strip">
+                <div class="metric-card highlight">
+                    <div class="metric-label">Current Weight</div>
+                    <div class="metric-value" id="latest-weight">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Lost</div>
+                    <div class="metric-value success" id="total-lost">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Eaten Today</div>
+                    <div class="metric-value" id="eaten-today">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Protein Today</div>
+                    <div class="metric-value success" id="protein-today">0g</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Daily Target</div>
+                    <div class="metric-value" id="daily-target-display">1,250</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Steps Today</div>
+                    <div class="metric-value" id="steps-today">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Est. TDEE</div>
+                    <div class="metric-value metric-value-sm" id="tdee-estimate">2,250</div>
+                </div>
+            </div>
+
+            <nav class="daily-jump" aria-label="Jump to section">
+                <a href="#log">Log</a>
+                <a href="#food">Food</a>
+                <a href="#track">NEAT</a>
+                <a href="#protocols">Protocols</a>
+            </nav>
+
+            <!-- LOG -->
+            <section id="log" class="daily-section" aria-labelledby="daily-log-heading">
+                <h2 class="daily-section-title" id="daily-log-heading">Weight Log</h2>
+                <div class="content-grid">
+                    <div class="card">
+                        <h2 id="log-form-title">Log Weight</h2>
+                        <p class="form-hint">One entry per day. Calories sync automatically from the Food Tracker.</p>
+                        <form id="log-form">
+                            <div class="form-grid">
+                                <div>
+                                    <label for="input-date">Date</label>
+                                    <input type="date" id="input-date" required readonly>
+                                </div>
+                                <div>
+                                    <label for="input-weight">Weight (lbs)</label>
+                                    <input type="number" id="input-weight" step="0.1" min="100" max="300" placeholder="Enter today's weight" required>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary" id="submit-btn">Log Weight</button>
+                                    <button type="button" class="btn-ghost" id="cancel-edit-btn" style="display:none">Cancel</button>
+                                </div>
+                            </div>
+                            <p class="form-status" id="form-status"></p>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Science Guardrails</h2>
+                        <ul class="guardrail-list">
+                            <li><strong>Energy balance</strong> — calories in vs out is the foundation; ~1,250 cal cut target</li>
+                            <li><strong>NEAT</strong> — fidget, pace, stand; epinephrine mobilizes fat (<a href="#track">NEAT section</a>)</li>
+                            <li><strong>Exercise</strong> — SIT/HIIT/MICT + accelerator sequence (<a href="#protocols">Protocols section</a>)</li>
+                            <li><strong>Protein</strong> — 140–160g daily to protect lean mass</li>
+                            <li class="alert"><strong>Medical clearance</strong> — required before fasted training or cold protocols</li>
+                            <li class="alert"><strong>Cold safety</strong> — start ~60°F; extreme cold can shock the heart</li>
+                            <li><strong>Exit</strong> — reverse diet via <a href="plan.html">Plan</a> after 160 lbs</li>
+                        </ul>
+                        <div class="ml-verdict" id="ml-verdict">
+                            <div class="verdict-label">ML Plan Check · cutting.py</div>
+                            <div class="verdict-text" id="ml-verdict-text">✓ Successful Compliance — High fat loss / maintained lean mass</div>
+                            <div class="verdict-note" id="ml-verdict-note">Decision tree score for 1,250 cal · 48h fast · 3 lifts · 150g protein. Run <code>python3 cutting.py</code> for full lean-mass report.</div>
+                        </div>
+                    </div>
+
+                    <div class="card chart-card span-2">
+                        <h2>Weight Progress <span class="card-subtitle">Program trend</span></h2>
+                        <div class="graph-container">
+                            <svg id="weight-svg" viewBox="0 0 600 260" preserveAspectRatio="none" role="img" aria-label="Weight progress chart"></svg>
+                        </div>
+                    </div>
+
+                    <div class="card span-2">
+                        <h2>
+                            Log History
+                            <span class="card-actions">
+                                <button class="export-btn" id="export-csv-btn" type="button">
+                                    <img class="btn-icon" src="items/download.png" alt="" width="18" height="18" decoding="async">
+                                    Export CSV
+                                </button>
+                            </span>
+                        </h2>
+                        <p class="card-subtitle form-hint">Edit or delete accidental entries. Calories come from food logged that day.</p>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Day</th>
+                                        <th>Weight</th>
+                                        <th>Calories</th>
+                                        <th>Protein</th>
+                                        <th>Steps</th>
+                                        <th>Delta</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="log-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FOOD -->
+            <section id="food" class="daily-section" aria-labelledby="daily-food-heading">
+                <h2 class="daily-section-title" id="daily-food-heading">Food Tracker</h2>
+                <div class="content-grid">
+                    <div class="card span-2">
+                        <h2>Metabolic Foundation <span class="card-subtitle">Calories in vs out · insulin</span></h2>
+                        <p class="neat-explainer neat-explainer-flush">Energy balance is the fundamental formula. Keeping <strong>insulin lower</strong> (fewer spikes from refined carbs) positions your system to oxidize more body fat. If you eat before training, fat and protein spike insulin less than carbs.</p>
+                        <div class="lean-mass-insight shield" id="insulin-insight">
+                            <strong>Today's Insulin Context</strong>
+                            <span id="insulin-insight-text">Log food to see carb load vs your calorie budget.</span>
+                        </div>
+                    </div>
+                    <div class="card span-2">
+                        <h2>
+                            Food Tracker
+                            <span class="card-subtitle">Tap a saved food, enter grams</span>
+                        </h2>
+
+                        <div class="calorie-bar-wrap">
+                            <div class="calorie-bar-header">
+                                <span>Today's intake</span>
+                                <strong id="calorie-progress-text">0 / 1,250 cal</strong>
+                            </div>
+                            <div class="calorie-bar">
+                                <div class="calorie-bar-fill" id="calorie-bar-fill" style="width:0%"></div>
+                            </div>
+                            <div class="macro-totals-row" id="macro-totals-row">
+                                <span>P <strong id="macro-total-protein">0</strong>g</span>
+                                <span>C <strong id="macro-total-carbs">0</strong>g</span>
+                                <span>F <strong id="macro-total-fat">0</strong>g</span>
+                            </div>
+                        </div>
+
+                        <p class="food-section-title">Calorie Fit Recommendations</p>
+                        <span class="remaining-cal-pill" id="remaining-cal-pill">— cal left today</span>
+                        <div class="food-recommend-list" id="food-recommend-list"></div>
+
+                        <div class="quick-log-panel" id="quick-log-panel">
+                            <h3 id="quick-log-title">Log food</h3>
+                            <div class="quick-log-row">
+                                <div>
+                                    <label for="input-grams">Grams eaten</label>
+                                    <input type="number" id="input-grams" min="1" max="5000" step="1" placeholder="e.g. 150">
+                                </div>
+                                <button type="button" class="btn-primary btn-inline" id="add-food-entry-btn">Add</button>
+                            </div>
+                            <p class="quick-log-preview" id="quick-log-preview"></p>
+                        </div>
+
+                        <p class="food-section-title">Saved Foods</p>
+                        <div class="food-library" id="food-library"></div>
+
+                        <p class="food-section-title">Add New Food to Library</p>
+                        <p class="form-hint">Macros per 100g (label values). Example: chicken breast ≈ 165 cal, 31g protein, 0g carb, 3.6g fat.</p>
+                        <form id="save-food-form" class="save-food-form">
+                            <div>
+                                <label for="new-food-name">Food name</label>
+                                <input type="text" id="new-food-name" placeholder="Chicken breast" required>
+                            </div>
+                            <div>
+                                <label for="new-food-cal">Cal</label>
+                                <input type="number" id="new-food-cal" min="1" max="900" step="1" placeholder="165" required>
+                            </div>
+                            <div>
+                                <label for="new-food-protein">Protein g</label>
+                                <input type="number" id="new-food-protein" min="0" max="100" step="0.1" placeholder="31" required>
+                            </div>
+                            <div>
+                                <label for="new-food-carbs">Carbs g</label>
+                                <input type="number" id="new-food-carbs" min="0" max="100" step="0.1" placeholder="0" value="0">
+                            </div>
+                            <div>
+                                <label for="new-food-fat">Fat g</label>
+                                <input type="number" id="new-food-fat" min="0" max="100" step="0.1" placeholder="3.6" value="0">
+                            </div>
+                            <button type="submit" class="btn-primary btn-inline">Save</button>
+                        </form>
+
+                        <p class="food-section-title">Today's Log</p>
+                        <ul class="food-log-list" id="today-food-log"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- NEAT / TRACK -->
+            <section id="track" class="daily-section" aria-labelledby="daily-track-heading">
+                <h2 class="daily-section-title" id="daily-track-heading">NEAT &amp; Protein</h2>
+                <div class="content-grid">
+                    <div class="card span-2">
+                        <h2>
+                            Muscle-Shield · Protein Tracker
+                            <span class="card-subtitle">Target 140–160g daily · 5'11" frame</span>
+                        </h2>
+
+                        <div class="calorie-bar-wrap">
+                            <div class="calorie-bar-header">
+                                <span>Today's protein</span>
+                                <strong id="protein-progress-text">0 / 140g min</strong>
+                            </div>
+                            <div class="calorie-bar">
+                                <div class="protein-bar-fill" id="protein-bar-fill" style="width:0%"></div>
+                            </div>
+                            <div class="protein-zone-marker">
+                                <div class="shield-zone" id="protein-shield-zone"></div>
+                            </div>
+                            <p class="form-hint">Green zone = 140–160g Muscle-Shield target · protein totals update automatically when you log food</p>
+                        </div>
+
+                        <p class="food-section-title">Today's Protein from Food</p>
+                        <ul class="food-log-list food-log-list-spaced" id="today-protein-log"></ul>
+
+                        <div class="lean-mass-insight shield" id="lean-mass-insight">
+                            <strong>Lean-Mass Predictor · cutting.py</strong>
+                            <span id="lean-mass-insight-text">Log food to see your daily muscle-shield status.</span>
+                        </div>
+                    </div>
+
+                    <div class="card span-2">
+                        <h2>
+                            Fidget Prompts
+                            <span class="card-subtitle">NEAT · epinephrine → fat mobilization</span>
+                        </h2>
+                        <p class="neat-explainer">
+                            Staccato movements—knee bounce, pacing, standing breaks—trigger <strong>epinephrine</strong> from neurons that connect directly to fat cells,
+                            stimulating mobilization and oxidation. This is the best entry point if traditional exercise feels like a barrier.
+                        </p>
+                        <div class="fidget-checklist" id="fidget-checklist">
+                            <label class="fidget-item" data-fidget="knee">
+                                <input type="checkbox" id="fidget-knee">
+                                <div><strong>Knee bounce / subtle fidget</strong><span>While seated — keep NEAT elevated without a workout</span></div>
+                            </label>
+                            <label class="fidget-item" data-fidget="pacing">
+                                <input type="checkbox" id="fidget-pacing">
+                                <div><strong>Pacing breaks</strong><span>2–5 min walk indoors every hour you're sedentary</span></div>
+                            </label>
+                            <label class="fidget-item" data-fidget="standing">
+                                <input type="checkbox" id="fidget-standing">
+                                <div><strong>Stand-up transitions</strong><span>Stand for calls, meals prep, or between tasks</span></div>
+                            </label>
+                        </div>
+                        <p class="form-status form-status-spaced" id="fidget-status"></p>
+                    </div>
+
+                    <div class="card span-2">
+                        <h2>
+                            NEAT Step Tracker
+                            <span class="card-subtitle">Non-Exercise Activity Thermogenesis</span>
+                        </h2>
+                        <p class="neat-explainer">
+                            Research by <strong>Rothwell &amp; Stock</strong> (and later 2015/2017 studies): people who fidget—knee bounce, pacing, standing—burn considerably more fat at the <em>same</em> food intake. On a steep deficit your nervous system subconsciously cuts movement; steps + fidgeting counter that plateau.
+                        </p>
+
+                        <div class="calorie-bar-wrap">
+                            <div class="calorie-bar-header">
+                                <span>Today's steps</span>
+                                <strong id="steps-progress-text">0 / 8,000</strong>
+                            </div>
+                            <div class="calorie-bar">
+                                <div class="steps-bar-fill" id="steps-bar-fill" style="width:0%"></div>
+                            </div>
+                        </div>
+
+                        <form id="neat-steps-form" class="neat-steps-form">
+                            <div>
+                                <label for="step-target-input">Daily step target</label>
+                                <input type="number" id="step-target-input" min="1000" max="30000" step="500" value="8000">
+                            </div>
+                            <div>
+                                <label for="input-steps">Today's steps</label>
+                                <input type="number" id="input-steps" min="0" max="50000" step="100" placeholder="e.g. 6500">
+                            </div>
+                            <button type="submit" class="btn-primary btn-inline">Save</button>
+                        </form>
+
+                        <div class="neat-tdee-row">
+                            <div class="neat-tdee-pill">Baseline TDEE <strong>2,250</strong> cal</div>
+                            <div class="neat-tdee-pill">NEAT-crash floor <strong>1,900</strong> cal</div>
+                            <div class="neat-tdee-pill">Your est. today <strong id="neat-tdee-inline">2,250</strong> cal</div>
+                        </div>
+
+                        <div class="lean-mass-insight shield lean-mass-insight-spaced" id="neat-insight">
+                            <strong>NEAT Status</strong>
+                            <span id="neat-insight-text">Log today's steps from your phone or watch to see if you're fighting the slowdown.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROTOCOLS -->
+            <section id="protocols" class="daily-section" aria-labelledby="daily-protocols-heading">
+                <h2 class="daily-section-title" id="daily-protocols-heading">Neuro Protocols</h2>
+                <div class="content-grid">
+                    <div class="card span-2">
+                        <h2>Shiver Protocol <span class="card-subtitle">1–5× per week · succinate → brown fat</span></h2>
+                        <p class="neat-explainer">Shivering—not just cold—releases <strong>succinate</strong>, activating brown-fat thermogenesis. The in/out pattern (not staying in continuously) keeps triggering shiver and avoids cold adaptation that blunts the effect.</p>
+                        <ol class="protocol-steps">
+                            <li>Enter cold water/shower (~60°F+ when starting) until shivering begins</li>
+                            <li>Exit for 1–3 minutes — do not towel off</li>
+                            <li>Re-enter and repeat for ~3 total in/out cycles</li>
+                        </ol>
+                        <div class="safety-callout"><strong>Cold safety:</strong> Extreme cold can shock the heart. Start uncomfortable but safe (~60°F). Get physician clearance before cold protocols.</div>
+                        <div class="protocol-week-stat" id="shiver-week-stat"></div>
+                        <form id="shiver-form" class="protocol-form protocol-form-spaced">
+                            <div>
+                                <label for="shiver-reps">Cycles completed</label>
+                                <input type="number" id="shiver-reps" min="1" max="5" value="3">
+                            </div>
+                            <div>
+                                <label for="shiver-temp">Water temp (°F)</label>
+                                <input type="number" id="shiver-temp" min="50" max="70" placeholder="e.g. 60">
+                            </div>
+                            <button type="submit" class="btn-primary btn-inline">Log Today</button>
+                        </form>
+                        <p class="form-status" id="shiver-status"></p>
+                    </div>
+
+                    <div class="card">
+                        <h2>This Week</h2>
+                        <ul class="guardrail-list" id="protocol-week-summary">
+                            <li>Shiver sessions logged below · target 1–5×/week</li>
+                        </ul>
+                    </div>
+
+                    <div class="card span-2">
+                        <h2>Exercise Protocol <span class="card-subtitle">Epinephrine → fat mobilization</span></h2>
+                        <div class="exercise-type-grid">
+                            <div class="exercise-type-tile"><strong>SIT</strong>8–30 sec all-out bursts</div>
+                            <div class="exercise-type-tile"><strong>HIIT</strong>60–240 sec submax intervals</div>
+                            <div class="exercise-type-tile"><strong>MICT</strong>Zone 2 · 55–70% max HR</div>
+                            <div class="exercise-type-tile"><strong>Accelerator</strong>20–60 min intense → Zone 2</div>
+                        </div>
+                        <p class="neat-explainer neat-explainer-flush"><strong>Recommended:</strong> 3–4×/week — high-intensity work (20–60 min: weights, SIT, HIIT) then immediately Zone 2 cardio. Fasted enhances fat % if medically cleared. <em>Not for performance goals</em> — athletes should fuel for sport, not fat loss.</p>
+                        <ul class="guardrail-list guardrail-list-spaced">
+                            <li><strong>&lt;90 min Zone 2:</strong> fasted vs fed — similar fat oxidation</li>
+                            <li><strong>≥90 min Zone 2:</strong> fasted burns more fat after the glycogen switchover</li>
+                            <li><strong>20–60 min intense → Zone 2:</strong> fasted shifts to fat earlier</li>
+                        </ul>
+
+                        <div class="exercise-reference">
+                            <label for="exercise-type">Browse protocol tips</label>
+                            <select id="exercise-type">
+                                <option value="SIT">SIT — sprint intervals</option>
+                                <option value="HIIT">HIIT — submax intervals</option>
+                                <option value="MICT">MICT — Zone 2 steady state</option>
+                                <option value="Accelerator">Fat-Loss Accelerator</option>
+                            </select>
+                            <div class="exercise-type-guide" id="exercise-type-guide" aria-live="polite">
+                                <p class="exercise-guide-instruction" id="exercise-guide-instruction"></p>
+                                <p class="exercise-guide-example"><strong>Example session:</strong> <span id="exercise-guide-example"></span></p>
+                                <p class="exercise-guide-duration"><strong>Suggested duration:</strong> <span id="exercise-guide-duration"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </section>
+    </main>
+</div>
+
+<script src="nav.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

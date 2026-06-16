@@ -1,0 +1,164 @@
+{
+  "source": "Huberman Lab Essentials — Fat Loss",
+  "extracted_at": "2026-06-15",
+  "core_principles": [
+    {
+      "id": "calories-in-out",
+      "title": "Calories in vs calories out",
+      "summary": "Fundamental formula for fat loss; non-negotiable. Nervous system strongly influences the calories-out side.",
+      "app_status": "implemented",
+      "app_location": ["food.html", "log.html"]
+    },
+    {
+      "id": "nervous-system-master",
+      "title": "Nervous system as master controller",
+      "summary": "Neurons innervate fat tissue and control mobilization and oxidation via local epinephrine—not mainly circulating adrenal adrenaline.",
+      "app_status": "implemented",
+      "app_location": ["guide.html"]
+    },
+    {
+      "id": "lipolysis-two-steps",
+      "title": "Mobilize then oxidize",
+      "summary": "Lipolysis: break fatty acids from glycerol (lipase), move to bloodstream, then oxidize in mitochondria as ATP.",
+      "app_status": "partial",
+      "app_location": ["guide.html"]
+    },
+    {
+      "id": "local-epinephrine",
+      "title": "Local epinephrine from fat-innervating neurons",
+      "summary": "Fat burning adrenaline comes from neurons connecting to fat, not primarily from adrenal glands into bloodstream.",
+      "app_status": "missing",
+      "app_location": []
+    }
+  ],
+  "behavioral_tools": [
+    {
+      "id": "fidgeting",
+      "title": "Fidgeting / NEAT",
+      "protocol": "Knee bounce, pacing, standing, staccato subtle movements throughout the day. Rothwell & Stock research; 2015/2017 metabolic tracking confirms same food intake + more movement = fat loss.",
+      "audience": "Good entry for exercise-averse or overweight individuals.",
+      "app_status": "implemented",
+      "app_location": ["track.html"]
+    },
+    {
+      "id": "shiver-protocol",
+      "title": "Deliberate cold + shiver (in/out)",
+      "protocol": "1–5×/week. Cold until shiver → exit 1–3 min without drying → re-enter. ~3 in/out cycles. ~60°F start if not adapted. Shiver releases succinate → brown fat thermogenesis.",
+      "safety": "Extreme cold can shock heart; physician clearance; not adapted = start uncomfortable not ice cold.",
+      "app_status": "implemented",
+      "app_location": ["protocols.html"]
+    },
+    {
+      "id": "exercise-sit",
+      "title": "SIT — Sprint Interval Training",
+      "protocol": ">100% VO2max, 8–30 sec bursts, recovery between.",
+      "app_status": "implemented",
+      "app_location": ["protocols.html"]
+    },
+    {
+      "id": "exercise-hiit",
+      "title": "HIIT",
+      "protocol": "80–100% VO2max, 60–240 sec bursts, recovery between.",
+      "app_status": "implemented",
+      "app_location": ["protocols.html"]
+    },
+    {
+      "id": "exercise-mict",
+      "title": "MICT / Zone 2",
+      "protocol": "20–60 min steady state, 40–60% VO2max or 55–70% max HR.",
+      "app_status": "implemented",
+      "app_location": ["protocols.html"]
+    },
+    {
+      "id": "fat-loss-accelerator",
+      "title": "High intensity → Zone 2 sequence",
+      "protocol": "20–60 min high intensity (weights, sprints, kettlebells) then immediately Zone 2 cardio. 3–4×/week. Fasted enhances fat % burned if medically cleared.",
+      "app_status": "partial",
+      "app_location": ["protocols.html"]
+    },
+    {
+      "id": "fasted-exercise-rules",
+      "title": "Fasted exercise timing",
+      "protocol": "<90 min moderate exercise: fasted vs fed similar for fat oxidation. ≥90 min MICT: fasted burns more fat after switchover. High intensity 20–60 min: fasted shifts to fat earlier. NOT for performance goals.",
+      "app_status": "partial",
+      "app_location": ["protocols.html"]
+    }
+  ],
+  "compounds": [
+    {
+      "id": "caffeine",
+      "title": "Caffeine",
+      "protocol": "100–400 mg, 30–40 min before exercise. Enhances fat oxidation %; up to ~400 mg (~1.5–2 cups; cafes often higher).",
+      "app_status": "implemented",
+      "app_location": ["protocols.html"]
+    },
+    {
+      "id": "yerba-mate",
+      "title": "Yerba maté",
+      "protocol": "Increases GLP-1 → glucagon pathway → more fat oxidation. Best before exercise; also helps at rest.",
+      "app_status": "partial",
+      "app_location": ["protocols.html"]
+    },
+    {
+      "id": "semaglutide",
+      "title": "GLP-1 analogs (Semaglutide)",
+      "protocol": "Prescription only; diabetes/weight loss drugs.",
+      "app_status": "implemented",
+      "app_location": ["protocols.html", "guide.html"]
+    },
+    {
+      "id": "berberine-metformin",
+      "title": "Berberine / Metformin",
+      "protocol": "Lower blood glucose → lower insulin → more fat oxidation. Prescription/medical supervision for metformin.",
+      "app_status": "implemented",
+      "app_location": ["guide.html"]
+    }
+  ],
+  "nutrition": [
+    {
+      "id": "insulin-low",
+      "title": "Keep insulin low for fat oxidation",
+      "summary": "High insulin blocks fatty acid → ATP in mitochondria. Low carb/moderate carb can help; doesn't require zero carb.",
+      "app_status": "implemented",
+      "app_location": ["food.html"]
+    },
+    {
+      "id": "diet-adherence",
+      "title": "Adherence over diet type",
+      "summary": "Gardner Lab (Stanford): low-fat, keto, IF etc. all work if deficit + adherence. Pick what you can stick to.",
+      "app_status": "partial",
+      "app_location": ["guide.html"]
+    },
+    {
+      "id": "pre-workout-food",
+      "title": "Pre-exercise nutrition",
+      "summary": "If eating before training: fat/protein spike insulin less than carbs. Can't train fasted → eat; prioritize low insulin if fat loss goal.",
+      "app_status": "missing",
+      "app_location": []
+    }
+  ],
+  "safety": [
+    {
+      "id": "physician-fasted-cold",
+      "title": "Medical clearance",
+      "summary": "Physician approval before fasted exercise and cold/shiver protocols.",
+      "app_status": "implemented",
+      "app_location": ["app.js medical banner"]
+    },
+    {
+      "id": "cold-heart",
+      "title": "Cold heart risk",
+      "summary": "Very cold water can cause heart attack if not adapted.",
+      "app_status": "implemented",
+      "app_location": ["protocols.html"]
+    },
+    {
+      "id": "performance-vs-fat-loss",
+      "title": "Performance vs fat loss",
+      "summary": "Fasted/low-insulin protocols optimize fat loss, not athletic performance.",
+      "app_status": "missing",
+      "app_location": []
+    }
+  ],
+  "missing_for_app": []
+}

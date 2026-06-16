@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#122d52">
+    <meta name="color-scheme" content="light">
+    <link rel="icon" href="items/home.png" type="image/png">
+    <title>History — The Cut</title>
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="history">
+
+<div class="app-shell">
+    <aside class="sidebar" id="app-sidebar" aria-label="Site navigation"></aside>
+
+    <main class="main-panel" id="main-content" tabindex="-1">
+        <header class="topbar">
+            <div class="topbar-greeting">
+                <h1><span class="text-accent">History</span></h1>
+                <p>Full weight timeline</p>
+            </div>
+            <div class="topbar-meta">
+                <span class="goal-badge" id="goal-badge">1,250 cal · 48h fast 2×/mo</span>
+                <span class="date-pill" id="header-date"></span>
+            </div>
+        </header>
+
+        <section class="dashboard" aria-label="Page content">
+
+            <div class="metrics-strip">
+                <div class="metric-card highlight">
+                    <div class="metric-label">Current Weight</div>
+                    <div class="metric-value" id="latest-weight">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Lost</div>
+                    <div class="metric-value success" id="total-lost">—</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Eaten Today</div>
+                    <div class="metric-value" id="eaten-today">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Protein Today</div>
+                    <div class="metric-value success" id="protein-today">0g</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Daily Target</div>
+                    <div class="metric-value" id="daily-target-display">1,250</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Steps Today</div>
+                    <div class="metric-value" id="steps-today">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Est. TDEE</div>
+                    <div class="metric-value" id="tdee-estimate" style="font-size:1.2rem">2,250</div>
+                </div>
+            </div>
+            <div class="content-grid">
+                <div class="card span-2">
+                    <h2>
+                        History
+                        <span class="card-actions">
+                            <button class="export-btn" id="export-csv-btn" type="button">
+                                <img class="btn-icon" src="items/download.png" alt="" width="18" height="18" decoding="async">
+                                Export CSV
+                            </button>
+                            <button class="clear-btn" id="clear-data-btn" type="button">Reset Logs</button>
+                        </span>
+                    </h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Weight</th>
+                                    <th>Calories</th>
+                                    <th>Protein</th>
+                                    <th>Steps</th>
+                                    <th>Delta</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="log-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="nav.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

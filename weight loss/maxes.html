@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#122d52">
+    <meta name="color-scheme" content="light">
+    <link rel="icon" href="items/home.png" type="image/png">
+    <title>Weekly Maxes — The Cut</title>
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="maxes">
+
+<div class="app-shell">
+    <aside class="sidebar" id="app-sidebar" aria-label="Site navigation"></aside>
+
+    <main class="main-panel" id="main-content" tabindex="-1">
+        <header class="topbar">
+            <div class="topbar-greeting">
+                <h1>Weekly <span class="text-accent">Maxes</span></h1>
+                <p>Best effort each week — push strength &amp; cardio</p>
+            </div>
+            <div class="topbar-meta">
+                <span class="goal-badge" id="goal-badge">1,250 cal · 48h fast 2×/mo</span>
+                <span class="date-pill" id="header-date"></span>
+            </div>
+        </header>
+
+        <section class="dashboard" aria-label="Page content">
+            <div class="max-pr-strip" id="max-pr-strip"></div>
+
+            <div class="content-grid">
+                <div class="card span-2">
+                    <h2>
+                        Log This Week
+                        <span class="card-subtitle" id="weekly-max-week-label">Week of —</span>
+                    </h2>
+                    <p class="form-status" style="margin-bottom:14px">One row per week (Mon–Sun). Log your best attempt for each move — updates if you beat it later in the same week.</p>
+
+                    <form id="weekly-max-form" class="weekly-max-form">
+                        <div>
+                            <label for="max-pushups">Push-ups <span class="field-hint">max reps</span></label>
+                            <input type="number" id="max-pushups" min="0" max="500" step="1" placeholder="e.g. 40">
+                        </div>
+                        <div>
+                            <label for="max-pullups">Pull-ups <span class="field-hint">max reps</span></label>
+                            <input type="number" id="max-pullups" min="0" max="100" step="1" placeholder="e.g. 10">
+                        </div>
+                        <div>
+                            <label for="max-plank">Plank <span class="field-hint">mm:ss</span></label>
+                            <input type="text" id="max-plank" placeholder="e.g. 2:30" inputmode="numeric">
+                        </div>
+                        <div>
+                            <label for="max-mile">Mile Run <span class="field-hint">mm:ss</span></label>
+                            <input type="text" id="max-mile" placeholder="e.g. 8:45" inputmode="numeric">
+                        </div>
+                        <button type="submit" class="btn-primary" style="width:auto;padding:11px 18px">Save Week</button>
+                    </form>
+                    <p class="form-status" id="weekly-max-status"></p>
+                </div>
+
+                <div class="card">
+                    <h2>How to Test</h2>
+                    <ul class="guardrail-list">
+                        <li><strong>Push-ups</strong> — strict form, chest to floor, max unbroken set</li>
+                        <li><strong>Pull-ups</strong> — dead hang start, chin over bar, max reps</li>
+                        <li><strong>Plank</strong> — forearm plank, hold until form breaks</li>
+                        <li><strong>Mile</strong> — best timed mile (track, treadmill, or mapped route)</li>
+                    </ul>
+                </div>
+
+                <div class="card span-2">
+                    <h2>
+                        Weekly History
+                        <button class="clear-btn" id="clear-maxes-btn" type="button">Reset Maxes</button>
+                    </h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Week</th>
+                                    <th>Push-ups</th>
+                                    <th>Pull-ups</th>
+                                    <th>Plank</th>
+                                    <th>Mile</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="weekly-max-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="nav.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

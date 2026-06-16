@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#122d52">
+    <meta name="color-scheme" content="light">
+    <link rel="icon" href="items/home.png" type="image/png">
+    <title>Home — The Cut</title>
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body data-page="home">
+
+<div class="app-shell">
+    <aside class="sidebar" id="app-sidebar" aria-label="Site navigation"></aside>
+
+    <main class="main-panel" id="main-content" tabindex="-1">
+        <header class="topbar">
+            <div class="topbar-greeting">
+                <h1>Today's <span class="text-accent">Cut</span></h1>
+                <p>217 lbs → 160 lbs</p>
+            </div>
+            <div class="topbar-meta">
+                <span class="goal-badge" id="goal-badge">1,250 cal · 48h fast 2×/mo</span>
+                <span class="date-pill" id="header-date"></span>
+            </div>
+        </header>
+
+        <section class="dashboard" aria-label="Today's overview">
+
+            <div class="goal-banner" id="goal-banner" style="display:none">
+                <div>
+                    <h3>Goal Reached — 160 lbs</h3>
+                    <p>Don't stop cold. Initiate your Reverse Diet to lock in your new set-point safely.</p>
+                </div>
+                <button type="button" class="btn-success" id="initiate-maintenance-btn">Initiate Maintenance</button>
+            </div>
+
+            <div class="metrics-strip compact">
+                <a href="daily.html#log" class="metric-card metric-card-link highlight">
+                    <div class="metric-label">Weight</div>
+                    <div class="metric-value" id="latest-weight">—</div>
+                </a>
+                <a href="daily.html#food" class="metric-card metric-card-link">
+                    <div class="metric-label">Eaten</div>
+                    <div class="metric-value" id="eaten-today">0</div>
+                </a>
+                <a href="daily.html#food" class="metric-card metric-card-link">
+                    <div class="metric-label">Target</div>
+                    <div class="metric-value" id="daily-target-display">1,250</div>
+                </a>
+                <a href="daily.html#track" class="metric-card metric-card-link">
+                    <div class="metric-label">Protein</div>
+                    <div class="metric-value success" id="protein-today">0g</div>
+                </a>
+            </div>
+
+            <div class="content-grid">
+                <div class="card span-2">
+                    <h2>Do Today</h2>
+                    <div class="home-actions">
+                        <a href="daily.html" class="home-action primary">
+                            <img class="ha-icon-img" src="items/daily.png" alt="" width="28" height="28" decoding="async">
+                            <div>
+                                <h3>Open Daily Hub</h3>
+                                <p>Log weight, food, NEAT, and protocols in one place</p>
+                            </div>
+                        </a>
+                        <a href="daily.html#log" class="home-action">
+                            <img class="ha-icon-img" src="items/daily.png" alt="" width="28" height="28" decoding="async">
+                            <div>
+                                <h3>Log weight</h3>
+                                <p>One entry per day — calories sync from food</p>
+                            </div>
+                        </a>
+                        <a href="daily.html#food" class="home-action">
+                            <img class="ha-icon-img" src="items/daily.png" alt="" width="28" height="28" decoding="async">
+                            <div>
+                                <h3>Log food</h3>
+                                <p>Track calories &amp; macros</p>
+                            </div>
+                        </a>
+                        <a href="daily.html#track" class="home-action">
+                            <img class="ha-icon-img" src="items/daily.png" alt="" width="28" height="28" decoding="async">
+                            <div>
+                                <h3>NEAT &amp; protein</h3>
+                                <p>Steps, fidget prompts, protein target</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="home-footer-links">
+                        <a href="daily.html#log"><img src="items/history.png" alt="" width="16" height="16" decoding="async"> Chart</a>
+                        <a href="history.html"><img src="items/history.png" alt="" width="16" height="16" decoding="async"> History</a>
+                        <a href="maxes.html"><img src="items/max.png" alt="" width="16" height="16" decoding="async"> Maxes</a>
+                        <a href="plan.html"><img src="items/plan.svg" alt="" width="16" height="16" decoding="async"> Plan</a>
+                        <a href="guide.html"><img src="items/science.png" alt="" width="16" height="16" decoding="async"> Science</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="nav.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

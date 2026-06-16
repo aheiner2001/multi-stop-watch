@@ -2,7 +2,7 @@
 
 Science-based 10-week cut tracker: **217 lbs → 160 lbs** at **1,250 cal/day**. Daily logging, food/macros, NEAT, and neuro protocols (Huberman Lab Essentials — Fat Loss framework).
 
-**Live:** [https://aheiner2001.github.io/multi-stop-watch/weight%20loss/](https://aheiner2001.github.io/multi-stop-watch/weight%20loss/)
+**Live:** [https://aheiner2001.github.io/multi-stop-watch/weight%20loss/](https://aheiner2001.github.io/multi-stop-watch/cutting/)
 
 ## Quick start
 

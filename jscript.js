@@ -13,6 +13,7 @@ let currentTheme = 'dark';
 let customColors = {};
 let db = null;
 let cloudSyncActive = false;
+let initialCloudCheckComplete = false;
 let saveDebounceTimer = null;
 
 const THEME_DEFAULTS = {
@@ -59,10 +60,18 @@ function initFirebase() {
   const text = document.getElementById('cloud-status-text');
 
   if (typeof firebase === 'undefined') {
+    initialCloudCheckComplete = true;
     if (dot) dot.classList.add('offline');
     if (text) text.textContent = 'Local Mode (Firebase offline)';
     return;
   }
+
+  // Fallback timer: if cloud doesn't respond within 3 seconds, allow local saves
+  setTimeout(() => {
+    if (!initialCloudCheckComplete) {
+      initialCloudCheckComplete = true;
+    }
+  }, 3000);
 
   try {
     if (!firebase.apps.length) {
@@ -76,6 +85,20 @@ function initFirebase() {
       if (dot) dot.classList.remove('offline');
       if (text) text.textContent = 'Cloud Synced (Firebase)';
 
+      if (!initialCloudCheckComplete) {
+        initialCloudCheckComplete = true;
+        // On initial startup: if cloud has data, cloud ALWAYS wins over fresh unseeded local devices
+        if (doc.exists && doc.data() && Array.isArray(doc.data().watches) && doc.data().watches.length > 0) {
+          applyRemoteState(doc.data());
+          return;
+        } else if (watches.length > 0 && localStorage.getItem('watches')) {
+          // Cloud document is empty or new, but this client already has real saved watches
+          saveAllState();
+          return;
+        }
+      }
+
+      // Subsequent live updates from other devices while app is open
       if (doc.exists) {
         const data = doc.data();
         if (data.watches && Array.isArray(data.watches) && data.updatedAt) {
@@ -87,18 +110,20 @@ function initFirebase() {
       }
     }, err => {
       console.warn('Firebase sync warning:', err);
+      initialCloudCheckComplete = true;
       if (dot) dot.classList.add('offline');
-      if (text) text.textContent = 'Local Mode (Sync standby)';
+      if (text) text.textContent = 'Local Mode (Permission/Offline)';
     });
   } catch (err) {
     console.error('Firebase initialization error:', err);
+    initialCloudCheckComplete = true;
     if (dot) dot.classList.add('offline');
     if (text) text.textContent = 'Local Mode';
   }
 }
 
 function applyRemoteState(data) {
-  if (data.watches) {
+  if (data.watches && Array.isArray(data.watches)) {
     watches.forEach(w => { if (w.interval) clearInterval(w.interval); });
     watches = [];
     document.querySelectorAll('.watch-card').forEach(c => c.remove());
@@ -117,23 +142,31 @@ function applyRemoteState(data) {
       updateToggleBtn(watch);
     });
     document.getElementById('empty')?.remove();
+    localStorage.setItem('watches', JSON.stringify(data.watches));
   }
 
   if (data.notes && Array.isArray(data.notes)) {
     notes = data.notes;
     document.querySelectorAll('.canvas-note').forEach(n => n.remove());
     notes.forEach(n => renderCanvasNote(n));
+    localStorage.setItem('stopwatch_notes', JSON.stringify(notes));
   }
 
   if (data.theme && data.theme !== currentTheme) {
     selectTheme(data.theme, false);
+    localStorage.setItem('stopwatch_theme', data.theme);
   }
   if (data.customColors) {
     customColors = data.customColors;
     applyAllCustomColors();
+    localStorage.setItem('stopwatch_custom_colors', JSON.stringify(customColors));
   }
   if (data.layout && data.layout !== currentLayout) {
     switchLayout(data.layout, false);
+    localStorage.setItem('stopwatch_layout', data.layout);
+  }
+  if (data.updatedAt) {
+    localStorage.setItem('stopwatch_last_updated', String(data.updatedAt));
   }
 }
 
@@ -176,7 +209,7 @@ function find_time(id) {
 /* ========================================================= */
 /* Stopwatch Operations */
 /* ========================================================= */
-function addWatch() {
+function addWatch(shouldSave = true) {
   const id = ++idCounter;
   // Calculate canvas placement
   const col = (watches.length % 3);
@@ -198,7 +231,7 @@ function addWatch() {
   watches.push(watch);
   renderCard(watch);
   document.getElementById('empty')?.remove();
-  scheduleSave();
+  if (shouldSave) scheduleSave();
 }
 
 function renderCard(watch) {
@@ -692,8 +725,8 @@ function saveAllState() {
   localStorage.setItem('stopwatch_layout', currentLayout);
   localStorage.setItem('stopwatch_last_updated', String(timestamp));
 
-  // Firebase Cloud Storage
-  if (db) {
+  // Firebase Cloud Storage (only save if initial cloud check has completed)
+  if (db && initialCloudCheckComplete) {
     db.collection('workspaces').doc('main_workspace').set(payload, { merge: true })
       .catch(err => console.warn('Could not save to Firebase:', err));
   }
@@ -702,6 +735,7 @@ function saveAllState() {
 function manualSync() {
   const text = document.getElementById('cloud-status-text');
   if (text) text.textContent = 'Syncing…';
+  initialCloudCheckComplete = true;
   saveAllState();
   setTimeout(() => {
     if (text) text.textContent = cloudSyncActive ? 'Cloud Synced' : 'Saved to Local Storage';
@@ -763,9 +797,10 @@ function loadLocalState() {
   }
 
   if (watches.length === 0) {
-    addWatch();
-    addWatch();
-    addWatch();
+    // Populate placeholder cards locally without scheduling a cloud overwrite
+    addWatch(false);
+    addWatch(false);
+    addWatch(false);
   }
 }
 

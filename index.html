@@ -3,27 +3,195 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stopwatches</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Multi Stopwatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+
+<!-- Inline Theme Preloader to prevent FOUC -->
+<script>
+  (function() {
+    try {
+      const savedTheme = localStorage.getItem('stopwatch_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      const savedColors = JSON.parse(localStorage.getItem('stopwatch_custom_colors') || '{}');
+      for (const [k, v] of Object.entries(savedColors)) {
+        if (v) document.documentElement.style.setProperty(k, v);
+      }
+    } catch(e) {}
+  })();
+</script>
+
+<!-- Firebase SDK (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<header>
-  <h1>Stopwatches</h1>
-  <p>Track multiple tasks independently</p>
+<header class="top-nav">
+  <div class="brand">
+    <h1>Multi Stopwatch</h1>
+    <p>Track tasks, habits & time independently</p>
+  </div>
+
+  <div class="nav-actions">
+    <!-- View / Layout Switcher -->
+    <div class="layout-switcher" role="radiogroup" aria-label="Layout View">
+      <button type="button" class="layout-btn active" id="btn-layout-grid" onclick="switchLayout('grid')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
+        </svg>
+        Grid
+      </button>
+      <button type="button" class="layout-btn" id="btn-layout-inline" onclick="switchLayout('inline')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path fill-rule="evenodd" d="M2 3.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0 4.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0 4.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+        Inline
+      </button>
+      <button type="button" class="layout-btn" id="btn-layout-canvas" onclick="switchLayout('canvas')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M1 1v14h14V1H1zm1 1h12v12H2V2zm2 2h4v4H4V4zm6 0h2v2h-2V4zm0 4h2v6h-2V8zM4 10h4v2H4v-2z"/>
+        </svg>
+        Canvas
+      </button>
+    </div>
+
+    <!-- Add Stopwatch -->
+    <button type="button" class="add-btn" onclick="addWatch()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Add Stopwatch
+    </button>
+
+    <!-- Settings Button -->
+    <button type="button" class="icon-btn" id="open-settings-btn" onclick="toggleSettingsDrawer(true)" aria-label="Open Settings">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+        <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+      </svg>
+      Settings
+    </button>
+  </div>
 </header>
 
-<button class="add-btn" onclick="addWatch()">
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  </svg>
-  Add Stopwatch
-</button>
-
-<div class="grid" id="grid">
-  <div class="empty" id="empty">No stopwatches yet. Add one above.</div>
+<!-- Canvas Mode Action Bar -->
+<div class="canvas-toolbar" id="canvas-toolbar">
+  <button type="button" class="btn-secondary" onclick="addCanvasNote()">
+    + Add Sticky Note
+  </button>
+  <button type="button" class="btn-secondary" onclick="resetCanvasPositions()">
+    Rearrange Cards
+  </button>
+  <span class="canvas-tip">💡 Tip: Drag timers & notes freely anywhere on the canvas sheet</span>
 </div>
+
+<main class="workspace-container">
+  <div class="grid" id="grid">
+    <div class="empty" id="empty">No stopwatches yet. Add one above.</div>
+  </div>
+</main>
+
+<!-- Settings Slide-Over Drawer -->
+<div class="drawer-backdrop" id="drawer-backdrop" onclick="toggleSettingsDrawer(false)"></div>
+<aside class="settings-drawer" id="settings-drawer" aria-label="Settings Panel">
+  <div class="drawer-header">
+    <h2>Styling & Settings</h2>
+    <button type="button" class="drawer-close" onclick="toggleSettingsDrawer(false)" aria-label="Close Settings">✕</button>
+  </div>
+
+  <div class="drawer-body">
+    <!-- Preset Themes -->
+    <div class="drawer-section">
+      <h3>Theme Presets</h3>
+      <div class="theme-presets">
+        <div class="theme-card" id="theme-card-dark" onclick="selectTheme('dark')">
+          <div class="theme-preview-dots">
+            <span class="theme-dot" style="background:#0d1b2a"></span>
+            <span class="theme-dot" style="background:#132236"></span>
+            <span class="theme-dot" style="background:#4a9eff"></span>
+          </div>
+          <div class="theme-card-name">🌑 Dark Navy</div>
+        </div>
+
+        <div class="theme-card" id="theme-card-light" onclick="selectTheme('light')">
+          <div class="theme-preview-dots">
+            <span class="theme-dot" style="background:#f5f7fa"></span>
+            <span class="theme-dot" style="background:#ffffff"></span>
+            <span class="theme-dot" style="background:#2563eb"></span>
+          </div>
+          <div class="theme-card-name">☀️ Clean Light</div>
+        </div>
+
+        <div class="theme-card" id="theme-card-notebook" onclick="selectTheme('notebook')">
+          <div class="theme-preview-dots">
+            <span class="theme-dot" style="background:#f6f1e7"></span>
+            <span class="theme-dot" style="background:#fffdf9"></span>
+            <span class="theme-dot" style="background:#b45309"></span>
+          </div>
+          <div class="theme-card-name">📜 Notebook</div>
+        </div>
+
+        <div class="theme-card" id="theme-card-cyber" onclick="selectTheme('cyber')">
+          <div class="theme-preview-dots">
+            <span class="theme-dot" style="background:#090a0f"></span>
+            <span class="theme-dot" style="background:#11131c"></span>
+            <span class="theme-dot" style="background:#00f0ff"></span>
+          </div>
+          <div class="theme-card-name">⚡ Cyber Neon</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Colors -->
+    <div class="drawer-section">
+      <h3>Custom Color Tweaks</h3>
+      <div class="color-field-list">
+        <div class="color-field-row">
+          <label for="color-bg">Page Background</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="color-bg" class="color-picker" oninput="updateCustomColor('--bg', this.value)">
+          </div>
+        </div>
+        <div class="color-field-row">
+          <label for="color-surface">Card Background</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="color-surface" class="color-picker" oninput="updateCustomColor('--surface', this.value)">
+          </div>
+        </div>
+        <div class="color-field-row">
+          <label for="color-accent">Primary Accent</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="color-accent" class="color-picker" oninput="updateCustomColor('--accent', this.value)">
+          </div>
+        </div>
+        <div class="color-field-row">
+          <label for="color-text">Text Color</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="color-text" class="color-picker" oninput="updateCustomColor('--text', this.value)">
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" style="margin-top:12px; width:100%;" onclick="resetCustomColors()">
+        Reset Colors to Theme Defaults
+      </button>
+    </div>
+
+    <!-- Cloud Sync Status -->
+    <div class="drawer-section">
+      <h3>Firebase Cloud Sync</h3>
+      <div class="cloud-card">
+        <div class="cloud-indicator">
+          <span class="cloud-dot" id="cloud-status-dot"></span>
+          <span id="cloud-status-text">Connecting…</span>
+        </div>
+        <button type="button" class="btn-secondary" onclick="manualSync()">Sync Now</button>
+      </div>
+    </div>
+  </div>
+</aside>
 
 <script src="jscript.js"></script>
 </body>

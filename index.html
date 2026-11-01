@@ -3,97 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Utah Study Hours Tracker</title>
+<title>Stopwatches</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header class="site-header">
-  <h1>Study Hours and Pomodoro</h1>
+<header>
+  <h1>Stopwatches</h1>
+  <p>Track multiple tasks independently</p>
 </header>
 
-<section class="clock-strip" aria-live="polite">
-  <div class="clock-strip__main">
-    <p class="clock-strip__time" id="utah-clock">—</p>
-    <p class="clock-strip__meta" id="day-metrics">—</p>
-  </div>
-  <button type="button" class="btn-secondary" id="btn-refresh-time">Refresh time</button>
-</section>
+<button class="add-btn" onclick="addWatch()">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>
+  Add Stopwatch
+</button>
 
-<p class="policy-caption">
-  <!-- <strong>Friday</strong> is a good day to lock in weekly targets before the weekend.
-  <strong>Saturday</strong> can carry unfinished work forward into the week’s final stretch.
-  <strong>Sunday</strong> is lighter on “core” scheduling: recommended hours spread across the coming Mon–Sat instead. -->
-</p>
-
-<div class="global-actions">
-  <button type="button" class="btn-danger-outline" id="btn-reset-week">Reset this week</button>
+<div class="grid" id="grid">
+  <div class="empty" id="empty">No stopwatches yet. Add one above.</div>
 </div>
 
-<section class="class-overview" id="class-overview" aria-label="Class time overview"></section>
-
-<!-- Put your alarm file at sounds/pomo-alarm.mp3 (or change src). OGG/WAV also work. -->
-<audio id="pomo-alarm" src="sounds/pomo-alarm.mp3" preload="auto"></audio>
-
-<section class="pomo-panel" aria-label="Pomodoro session timer">
-  <div class="pomo-panel__header">
-    <div>
-      <p class="pomo-panel__title">Pomodoro</p>
-      <p class="pomo-panel__subtitle">Focus length is measured by <strong>course timer runtime</strong>: the Pomodoro countdown advances only while a course timer is running. Switching courses carries time into the same block; stopping all timers pauses the countdown until you start again.</p>
-    </div>
-    <div class="pomo-panel__notify">
-      <button type="button" class="btn-secondary btn-small" id="pomo-notify-btn">Allow browser alerts</button>
-    </div>
-  </div>
-  <div class="pomo-panel__grid">
-    <div class="pomo-box">
-      <h2 class="pomo-box__heading">Block lengths</h2>
-      <div class="pomo-box__body">
-        <div class="pomo-fields">
-          <div class="pomo-field">
-            <label class="pomo-field__label" for="pomo-focus-min">Focus</label>
-            <div class="pomo-field__row">
-              <input type="number" class="num-input pomo-field__input" id="pomo-focus-min" min="1" max="180" step="1" value="45" />
-              <span class="pomo-field__suffix">minutes</span>
-            </div>
-          </div>
-          <div class="pomo-field">
-            <label class="pomo-field__label" for="pomo-break-min">Break</label>
-            <div class="pomo-field__row">
-              <input type="number" class="num-input pomo-field__input" id="pomo-break-min" min="1" max="90" step="1" value="10" />
-              <span class="pomo-field__suffix">minutes</span>
-            </div>
-          </div>
-        </div>
-        <p class="pomo-box__hint" id="pomo-box-hint"></p>
-      </div>
-    </div>
-    <div class="pomo-box pomo-box--session">
-      <h2 class="pomo-box__heading">Current session</h2>
-      <div class="pomo-box__body">
-        <p class="pomo-session__phase" id="pomo-phase-label">Idle</p>
-        <p class="pomo-session__time" id="pomo-countdown">45:00</p>
-        <div class="pomo-session__track" aria-hidden="true">
-          <div class="pomo-session__fill" id="pomo-bar-fill"></div>
-        </div>
-        <div class="pomo-session__actions">
-          <button type="button" class="btn btn-secondary" id="pomo-refresh">Sync from timers</button>
-          <button type="button" class="btn btn-secondary" id="pomo-restart">Restart focus</button>
-          <button type="button" class="btn btn-start" id="pomo-break-start" disabled>Start break</button>
-          <button type="button" class="btn btn-pause" id="pomo-skip-break" hidden>Skip break</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <footer class="pomo-panel__footer">
-    <p>When logged study time reaches your focus length, you hear your <code>sounds/pomo-alarm.mp3</code> file if present, otherwise a short beep (plus an optional browser notification). Use <strong>Start break</strong> after a focus block, then <strong>Skip break</strong> if you want to return early.</p>
-  </footer>
-</section>
-
-<div id="courses" class="courses"></div>
-
-<script src="study-logic.js"></script>
 <script src="jscript.js"></script>
 </body>
 </html>

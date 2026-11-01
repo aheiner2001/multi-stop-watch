@@ -255,7 +255,7 @@ function renderCard(watch) {
         oninput="updateWatchGoal(${watch.id}, this.value)">
       <button type="button" class="delete-btn" onclick="removeWatch(${watch.id})" title="Delete stopwatch">✕</button>
     </div>
-    <div class="display-wrapper">
+    <div class="display-wrapper" onclick="toggle(${watch.id})" title="Tap to Start/Pause" role="button" tabindex="0">
       <div class="display" id="display-${watch.id}">
         <span class="time">00:00</span><span class="ms">.00</span>
       </div>
@@ -301,6 +301,10 @@ function updateWatchGoal(id, val) {
 function toggle(id) {
   const w = watches.find(w => w.id === id);
   if (!w) return;
+
+  if (navigator.vibrate) {
+    try { navigator.vibrate(25); } catch(e) {}
+  }
 
   if (w.running) {
     clearInterval(w.interval);
@@ -351,6 +355,10 @@ function updateDisplay(id) {
 function reset(id) {
   const w = watches.find(w => w.id === id);
   if (!w) return;
+
+  if (navigator.vibrate) {
+    try { navigator.vibrate([15, 30, 15]); } catch(e) {}
+  }
 
   clearInterval(w.interval);
   w.elapsed = 0;
@@ -479,7 +487,7 @@ function resetCanvasPositions() {
 }
 
 /* ========================================================= */
-/* Drag-and-Drop Handler Engine */
+/* Drag-and-Drop Handler Engine (Mouse + Touch Support) */
 /* ========================================================= */
 function attachDraggable(element, onMoveCallback) {
   let isDragging = false;
@@ -488,17 +496,27 @@ function attachDraggable(element, onMoveCallback) {
   let initialLeft = 0;
   let initialTop = 0;
 
-  element.addEventListener('mousedown', (e) => {
+  function getClientCoords(e) {
+    if (e.touches && e.touches.length > 0) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+  }
+
+  function onDragStart(e) {
     if (currentLayout !== 'canvas') return;
-    // Don't drag if interacting with inputs, buttons or textarea
     const tag = e.target.tagName.toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'button' || e.target.closest('button')) {
       return;
     }
 
+    const coords = getClientCoords(e);
     isDragging = true;
-    startX = e.clientX;
-    startY = e.clientY;
+    startX = coords.x;
+    startY = coords.y;
 
     const rect = element.getBoundingClientRect();
     const parentRect = element.parentElement.getBoundingClientRect();
@@ -506,37 +524,47 @@ function attachDraggable(element, onMoveCallback) {
     initialTop = rect.top - parentRect.top;
 
     element.style.zIndex = '1000';
-    e.preventDefault();
 
-    function onMouseMove(moveEvent) {
+    function onDragMove(moveEvent) {
       if (!isDragging) return;
-      const dx = moveEvent.clientX - startX;
-      const dy = moveEvent.clientY - startY;
+      const moveCoords = getClientCoords(moveEvent);
+      const dx = moveCoords.x - startX;
+      const dy = moveCoords.y - startY;
 
       let nextX = Math.max(10, initialLeft + dx);
       let nextY = Math.max(10, initialTop + dy);
 
       element.style.left = `${nextX}px`;
       element.style.top = `${nextY}px`;
+      if (moveEvent.cancelable) moveEvent.preventDefault();
     }
 
-    function onMouseUp(upEvent) {
+    function onDragEnd(upEvent) {
       if (!isDragging) return;
       isDragging = false;
       element.style.zIndex = element.classList.contains('canvas-note') ? '5' : '10';
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
 
-      const dx = upEvent.clientX - startX;
-      const dy = upEvent.clientY - startY;
+      window.removeEventListener('mousemove', onDragMove);
+      window.removeEventListener('mouseup', onDragEnd);
+      window.removeEventListener('touchmove', onDragMove);
+      window.removeEventListener('touchend', onDragEnd);
+
+      const endCoords = getClientCoords(upEvent);
+      const dx = endCoords.x - startX;
+      const dy = endCoords.y - startY;
       const finalX = Math.max(10, initialLeft + dx);
       const finalY = Math.max(10, initialTop + dy);
       onMoveCallback(finalX, finalY);
     }
 
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-  });
+    window.addEventListener('mousemove', onDragMove);
+    window.addEventListener('mouseup', onDragEnd);
+    window.addEventListener('touchmove', onDragMove, { passive: false });
+    window.addEventListener('touchend', onDragEnd);
+  }
+
+  element.addEventListener('mousedown', onDragStart);
+  element.addEventListener('touchstart', onDragStart, { passive: true });
 }
 
 /* ========================================================= */

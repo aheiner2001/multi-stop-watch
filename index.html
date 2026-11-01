@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Multi Stopwatch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,9 +94,17 @@
   </div>
 </main>
 
+<!-- Mobile Floating Action Button (Thumb-accessible) -->
+<button type="button" class="mobile-fab" onclick="addWatch()" aria-label="Add Stopwatch">
+  <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+    <path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>
+</button>
+
 <!-- Settings Slide-Over Drawer -->
 <div class="drawer-backdrop" id="drawer-backdrop" onclick="toggleSettingsDrawer(false)"></div>
 <aside class="settings-drawer" id="settings-drawer" aria-label="Settings Panel">
+  <div class="mobile-drawer-handle" aria-hidden="true"></div>
   <div class="drawer-header">
     <h2>Styling & Settings</h2>
     <button type="button" class="drawer-close" onclick="toggleSettingsDrawer(false)" aria-label="Close Settings">✕</button>

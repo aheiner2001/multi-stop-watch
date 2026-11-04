@@ -85,7 +85,9 @@
   <button type="button" class="btn-secondary" onclick="resetCanvasPositions()">
     Rearrange Cards
   </button>
-  <span class="canvas-tip">💡 Tip: Drag timers & notes freely anywhere on the canvas sheet</span>
+  <button type="button" class="btn-secondary" id="canvas-group" onclick="groupCanvasSelection()" disabled>Group selected</button>
+  <button type="button" class="btn-secondary" id="canvas-ungroup" onclick="ungroupCanvasSelection()" disabled>Ungroup</button>
+  <span class="canvas-tip">Drag handles to snap. Select timers or notes to group them.</span>
 </div>
 
 <main class="workspace-container">

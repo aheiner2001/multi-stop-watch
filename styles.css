@@ -191,6 +191,7 @@ body {
 /* Canvas Toolbar */
 .canvas-toolbar {
   display: none;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   max-width: 1100px;
@@ -256,34 +257,40 @@ body.is-canvas-mode .canvas-toolbar {
 }
 
 /* Layout 3: Canvas / Whiteboard Mode */
+body.is-canvas-mode .workspace-container {
+  overflow-x: auto;
+}
+.canvas-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 .grid.layout-canvas {
   display: block;
   position: relative;
-  min-height: 850px;
+  width: max(100%, var(--canvas-width, 0px));
+  min-height: max(850px, var(--canvas-height, 0px));
   border: 1px dashed var(--border);
   border-radius: 16px;
   background-image: radial-gradient(var(--border) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-size: var(--canvas-step) var(--canvas-step);
+  background-position: calc(var(--canvas-step) / -2) calc(var(--canvas-step) / -2);
   overflow: hidden;
   padding: 20px;
 }
 .grid.layout-canvas .watch-card {
   position: absolute;
-  width: 300px;
-  cursor: grab;
+  overflow: auto;
   z-index: 10;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
-.grid.layout-canvas .watch-card:active {
-  cursor: grabbing;
-}
 .grid.layout-canvas .card-drag-handle {
   display: block;
-  height: 6px;
-  width: 40px;
+  flex: 0 0 16px;
+  width: 48px;
+  border: 0;
   background: var(--border);
   border-radius: 3px;
-  margin: -10px auto 10px;
+  margin: -10px auto 0;
   cursor: grab;
 }
 
@@ -291,21 +298,81 @@ body.is-canvas-mode .canvas-toolbar {
 .canvas-note {
   position: absolute;
   width: 220px;
-  min-height: 120px;
+  min-height: 96px;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-left: 4px solid var(--accent);
   border-radius: 10px;
   padding: 12px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-  cursor: grab;
   z-index: 5;
-  display: flex;
+  display: none;
   flex-direction: column;
   animation: fadeIn 0.2s ease;
 }
-.canvas-note:active {
-  cursor: grabbing;
+.layout-canvas .canvas-note {
+  display: flex;
+}
+.canvas-select,
+.canvas-resize {
+  display: none;
+}
+.layout-canvas .canvas-select,
+.layout-canvas .canvas-resize {
+  display: block;
+  position: absolute;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.canvas-select {
+  top: 4px;
+  left: 4px;
+  padding: 2px 5px;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.canvas-note .canvas-select {
+  left: auto;
+  right: 34px;
+}
+.canvas-resize {
+  right: 3px;
+  bottom: 3px;
+  width: 23px;
+  height: 23px;
+  cursor: nwse-resize;
+}
+.canvas-resize::after {
+  content: '◢';
+}
+.note-drag-handle {
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  cursor: grab;
+}
+.card-drag-handle,
+.note-drag-handle,
+.canvas-resize {
+  touch-action: none;
+}
+.layout-canvas .canvas-grouped {
+  border-style: dashed;
+}
+.layout-canvas .canvas-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.layout-canvas .canvas-manipulating {
+  z-index: 20;
+}
+.layout-canvas .watch-card,
+.layout-canvas .canvas-note {
+  padding-bottom: 28px;
 }
 .canvas-note-header {
   display: flex;
@@ -318,6 +385,8 @@ body.is-canvas-mode .canvas-toolbar {
 }
 .canvas-note-textarea {
   flex: 1;
+  min-height: 0;
+  min-width: 0;
   background: transparent;
   border: none;
   outline: none;
@@ -870,13 +939,7 @@ body.is-canvas-mode .canvas-toolbar {
 
   /* Canvas view on Mobile */
   .grid.layout-canvas {
-    min-height: 700px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .grid.layout-canvas .watch-card {
-    width: 290px;
-    touch-action: none;
+    min-height: max(700px, var(--canvas-height, 0px));
   }
   .grid.layout-canvas .card-drag-handle {
     display: block;
@@ -884,7 +947,7 @@ body.is-canvas-mode .canvas-toolbar {
     width: 60px;
     background: var(--border);
     border-radius: 6px;
-    margin: -6px auto 12px;
+    margin: -6px auto 0;
     touch-action: none;
   }
 }

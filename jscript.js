@@ -8,6 +8,8 @@ let watches = [];
 let notes = [];
 let idCounter = 0;
 let noteIdCounter = 0;
+const CANVAS_STEP = 24;
+const canvasSelection = new Set();
 let currentLayout = 'grid'; // 'grid' | 'inline' | 'canvas'
 let currentTheme = 'dark';
 let customColors = {};
@@ -123,6 +125,7 @@ function initFirebase() {
 }
 
 function applyRemoteState(data) {
+  canvasSelection.clear();
   if (data.watches && Array.isArray(data.watches)) {
     watches.forEach(w => { if (w.interval) clearInterval(w.interval); });
     watches = [];
@@ -148,7 +151,10 @@ function applyRemoteState(data) {
   if (data.notes && Array.isArray(data.notes)) {
     notes = data.notes;
     document.querySelectorAll('.canvas-note').forEach(n => n.remove());
-    notes.forEach(n => renderCanvasNote(n));
+    notes.forEach(note => {
+      noteIdCounter = Math.max(noteIdCounter, note.id);
+      renderCanvasNote(note);
+    });
     localStorage.setItem('stopwatch_notes', JSON.stringify(notes));
   }
 
@@ -165,6 +171,7 @@ function applyRemoteState(data) {
     switchLayout(data.layout, false);
     localStorage.setItem('stopwatch_layout', data.layout);
   }
+  refreshCanvas();
   if (data.updatedAt) {
     localStorage.setItem('stopwatch_last_updated', String(data.updatedAt));
   }
@@ -214,8 +221,8 @@ function addWatch(shouldSave = true) {
   // Calculate canvas placement
   const col = (watches.length % 3);
   const row = Math.floor(watches.length / 3);
-  const defaultX = 24 + col * 320;
-  const defaultY = 24 + row * 220;
+  const defaultX = CANVAS_STEP + col * 336;
+  const defaultY = CANVAS_STEP + row * 264;
 
   const watch = {
     id,
@@ -241,13 +248,8 @@ function renderCard(watch) {
   card.id = `card-${watch.id}`;
   card.setAttribute('data-id', watch.id);
 
-  if (currentLayout === 'canvas') {
-    card.style.left = `${watch.x || 20}px`;
-    card.style.top = `${watch.y || 20}px`;
-  }
-
   card.innerHTML = `
-    <div class="card-drag-handle" title="Drag to move card"></div>
+    <button type="button" class="card-drag-handle" aria-label="Move stopwatch" title="Drag or use arrow keys to move"></button>
     <div class="watch-top">
       <input class="label-input" placeholder="Label…" value="${escapeHtml(watch.label || '')}" 
         oninput="updateWatchLabel(${watch.id}, this.value)">
@@ -267,14 +269,9 @@ function renderCard(watch) {
     </div>
   `;
 
-  // Attach drag listener for canvas mode
-  attachDraggable(card, (newX, newY) => {
-    watch.x = newX;
-    watch.y = newY;
-    scheduleSave();
-  });
-
   grid.appendChild(card);
+  attachCanvasControls(card, watch, card.querySelector('.card-drag-handle'));
+  refreshCanvas();
 }
 
 function escapeHtml(str) {
@@ -383,8 +380,9 @@ function removeWatch(id) {
   if (w && w.interval) clearInterval(w.interval);
   watches = watches.filter(w => w.id !== id);
   document.getElementById(`card-${id}`)?.remove();
+  refreshCanvas();
 
-  if (watches.length === 0 && notes.length === 0) {
+  if (watches.length === 0) {
     const grid = document.getElementById('grid');
     if (!document.getElementById('empty')) {
       const empty = document.createElement('div');
@@ -398,19 +396,17 @@ function removeWatch(id) {
 }
 
 /* ========================================================= */
-/* Canvas Notes & Freeform Dragging */
-/* ========================================================= */
-function addCanvasNote(savedNote = null) {
-  const id = savedNote ? savedNote.id : ++noteIdCounter;
-  const note = savedNote || {
-    id,
+/* Canvas layout */
+function addCanvasNote() {
+  const note = {
+    id: ++noteIdCounter,
     text: '',
-    x: 40 + (notes.length * 30),
-    y: 260 + (notes.length * 20)
+    x: CANVAS_STEP + (notes.length % 4) * 240,
+    y: CANVAS_STEP + Math.ceil(watches.length / 3) * 264 + Math.floor(notes.length / 4) * 168
   };
-  if (!savedNote) notes.push(note);
+  notes.push(note);
   renderCanvasNote(note);
-  if (!savedNote) scheduleSave();
+  scheduleSave();
 }
 
 function renderCanvasNote(note) {
@@ -418,200 +414,272 @@ function renderCanvasNote(note) {
   const el = document.createElement('div');
   el.className = 'canvas-note';
   el.id = `note-${note.id}`;
-
-  if (currentLayout === 'canvas') {
-    el.style.left = `${note.x}px`;
-    el.style.top = `${note.y}px`;
-  }
-
   el.innerHTML = `
     <div class="canvas-note-header">
-      <span>NOTE</span>
+      <button type="button" class="note-drag-handle" aria-label="Move note" title="Drag or use arrow keys to move">NOTE</button>
       <button type="button" class="delete-btn" onclick="removeCanvasNote(${note.id})" title="Delete note">✕</button>
     </div>
     <textarea class="canvas-note-textarea" placeholder="Type notes here…">${escapeHtml(note.text || '')}</textarea>
   `;
 
-  const textarea = el.querySelector('textarea');
-  textarea.addEventListener('input', (e) => {
-    note.text = e.target.value;
-    scheduleSave();
-  });
-
-  attachDraggable(el, (newX, newY) => {
-    note.x = newX;
-    note.y = newY;
+  el.querySelector('textarea').addEventListener('input', (event) => {
+    note.text = event.target.value;
     scheduleSave();
   });
 
   grid.appendChild(el);
+  attachCanvasControls(el, note, el.querySelector('.note-drag-handle'));
+  refreshCanvas();
 }
 
 function removeCanvasNote(id) {
-  notes = notes.filter(n => n.id !== id);
+  notes = notes.filter(note => note.id !== id);
   document.getElementById(`note-${id}`)?.remove();
+  refreshCanvas();
+  scheduleSave();
+}
+
+function canvasItems() {
+  return [
+    ...watches.map(data => ({ data, key: `card-${data.id}`, type: 'stopwatch' })),
+    ...notes.map(data => ({ data, key: `note-${data.id}`, type: 'note' }))
+  ];
+}
+
+function canvasBounds(item) {
+  const { data, type } = item;
+  const timer = type === 'stopwatch';
+  return {
+    x: Math.max(0, data.x ?? CANVAS_STEP),
+    y: Math.max(0, data.y ?? CANVAS_STEP),
+    width: data.width ?? (timer ? 288 : 216),
+    height: data.height ?? (timer ? 240 : 144)
+  };
+}
+
+function snapCanvas(value, minimum = 0) {
+  return Math.max(minimum, Math.round(value / CANVAS_STEP) * CANVAS_STEP);
+}
+
+function paintCanvasItem(element, bounds) {
+  element.style.left = bounds ? `${bounds.x}px` : '';
+  element.style.top = bounds ? `${bounds.y}px` : '';
+  element.style.width = bounds ? `${bounds.width}px` : '';
+  element.style.height = bounds ? `${bounds.height}px` : '';
+}
+
+function fitCanvas(items, preview = new Map()) {
+  const grid = document.getElementById('grid');
+  grid.style.setProperty('--canvas-step', `${CANVAS_STEP}px`);
+  const bounds = items.map(item => preview.get(item.key) ?? canvasBounds(item));
+  grid.style.setProperty('--canvas-width', `${Math.max(0, ...bounds.map(box => box.x + box.width)) + CANVAS_STEP}px`);
+  grid.style.setProperty('--canvas-height', `${Math.max(0, ...bounds.map(box => box.y + box.height)) + CANVAS_STEP}px`);
+}
+
+function refreshCanvas() {
+  const items = canvasItems();
+  const isCanvas = currentLayout === 'canvas';
+  for (const key of canvasSelection) {
+    if (!items.some(item => item.key === key)) canvasSelection.delete(key);
+  }
+
+  for (const item of items) {
+    const element = document.getElementById(item.key);
+    if (!element) continue;
+    const selected = canvasSelection.has(item.key);
+    const grouped = Boolean(item.data.groupId);
+    element.classList.toggle('canvas-selected', selected);
+    element.classList.toggle('canvas-grouped', grouped);
+    const button = element.querySelector('.canvas-select');
+    button.setAttribute('aria-pressed', String(selected));
+    button.setAttribute('aria-label', `Select ${grouped ? 'grouped ' : ''}${item.type}`);
+    button.textContent = selected ? 'Selected' : grouped ? 'Grouped' : 'Select';
+    paintCanvasItem(element, isCanvas ? canvasBounds(item) : null);
+  }
+
+  document.getElementById('canvas-group').disabled = canvasSelection.size < 2;
+  document.getElementById('canvas-ungroup').disabled = !items.some(item => canvasSelection.has(item.key) && item.data.groupId);
+  if (isCanvas) fitCanvas(items);
+}
+
+function groupCanvasSelection() {
+  if (canvasSelection.size < 2) return;
+  const items = canvasItems();
+  const selectedGroups = new Set(items.filter(item => canvasSelection.has(item.key)).map(item => item.data.groupId).filter(Boolean));
+  const groupId = 'group-' + (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`);
+  for (const item of items) {
+    if (canvasSelection.has(item.key) || selectedGroups.has(item.data.groupId)) {
+      const { x, y } = canvasBounds(item);
+      Object.assign(item.data, { groupId, x: snapCanvas(x), y: snapCanvas(y) });
+    }
+  }
+  canvasSelection.clear();
+  refreshCanvas();
+  scheduleSave();
+}
+
+function ungroupCanvasSelection() {
+  const items = canvasItems();
+  const selectedGroups = new Set(items.filter(item => canvasSelection.has(item.key)).map(item => item.data.groupId).filter(Boolean));
+  for (const { data } of items) {
+    if (selectedGroups.has(data.groupId)) delete data.groupId;
+  }
+  canvasSelection.clear();
+  refreshCanvas();
   scheduleSave();
 }
 
 function resetCanvasPositions() {
-  const cols = 3;
-  const startX = 24;
-  const startY = 24;
-  const cardWidth = 320;
-  const cardHeight = 220;
+  const items = canvasItems();
+  const units = new Map();
+  for (const item of items) {
+    const key = item.data.groupId ?? item.key;
+    if (!units.has(key)) units.set(key, []);
+    units.get(key).push(item);
+  }
 
-  watches.forEach((w, i) => {
-    const c = i % cols;
-    const r = Math.floor(i / cols);
-    w.x = startX + c * cardWidth;
-    w.y = startY + r * cardHeight;
-    const card = document.getElementById(`card-${w.id}`);
-    if (card) {
-      card.style.left = `${w.x}px`;
-      card.style.top = `${w.y}px`;
+  const availableWidth = document.querySelector('.workspace-container').clientWidth;
+  let x = CANVAS_STEP;
+  let y = CANVAS_STEP;
+  let rowHeight = 0;
+  for (const members of units.values()) {
+    const bounds = members.map(canvasBounds);
+    const left = Math.min(...bounds.map(box => box.x));
+    const top = Math.min(...bounds.map(box => box.y));
+    const width = Math.max(...bounds.map(box => box.x + box.width)) - left;
+    const height = Math.max(...bounds.map(box => box.y + box.height)) - top;
+    if (x > CANVAS_STEP && x + width + CANVAS_STEP > availableWidth) {
+      x = CANVAS_STEP;
+      y += rowHeight;
+      rowHeight = 0;
     }
-  });
-
-  const notesStartY = startY + (Math.ceil(watches.length / cols) * cardHeight) + 20;
-  notes.forEach((n, i) => {
-    n.x = startX + (i % 4) * 240;
-    n.y = notesStartY + Math.floor(i / 4) * 160;
-    const el = document.getElementById(`note-${n.id}`);
-    if (el) {
-      el.style.left = `${n.x}px`;
-      el.style.top = `${n.y}px`;
-    }
-  });
-
+    members.forEach(({ data }, index) => {
+      data.x = x + bounds[index].x - left;
+      data.y = y + bounds[index].y - top;
+    });
+    x += Math.ceil(width / CANVAS_STEP) * CANVAS_STEP + CANVAS_STEP;
+    rowHeight = Math.max(rowHeight, Math.ceil(height / CANVAS_STEP) * CANVAS_STEP + CANVAS_STEP);
+  }
+  refreshCanvas();
   scheduleSave();
 }
 
-/* ========================================================= */
-/* Drag-and-Drop Handler Engine (Mouse + Touch Support) */
-/* ========================================================= */
-function attachDraggable(element, onMoveCallback) {
-  let isDragging = false;
-  let startX = 0;
-  let startY = 0;
-  let initialLeft = 0;
-  let initialTop = 0;
+function attachCanvasControls(element, data, moveHandle) {
+  const type = element.classList.contains('watch-card') ? 'stopwatch' : 'note';
+  const select = document.createElement('button');
+  select.type = 'button';
+  select.className = 'canvas-select';
+  select.addEventListener('click', () => {
+    if (canvasSelection.has(element.id)) canvasSelection.delete(element.id);
+    else canvasSelection.add(element.id);
+    refreshCanvas();
+  });
 
-  function getClientCoords(e) {
-    if (e.touches && e.touches.length > 0) {
-      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-    if (e.changedTouches && e.changedTouches.length > 0) {
-      return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-    }
-    return { x: e.clientX, y: e.clientY };
-  }
+  const resize = document.createElement('button');
+  resize.type = 'button';
+  resize.className = 'canvas-resize';
+  resize.setAttribute('aria-label', `Resize ${type}`);
+  resize.title = 'Drag or use arrow keys to resize';
+  element.append(select, resize);
 
-  function onDragStart(e) {
-    if (currentLayout !== 'canvas') return;
-    const tag = e.target.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'button' || e.target.closest('button')) {
-      return;
-    }
-
-    const coords = getClientCoords(e);
-    isDragging = true;
-    startX = coords.x;
-    startY = coords.y;
-
-    const rect = element.getBoundingClientRect();
-    const parentRect = element.parentElement.getBoundingClientRect();
-    initialLeft = rect.left - parentRect.left;
-    initialTop = rect.top - parentRect.top;
-
-    element.style.zIndex = '1000';
-
-    function onDragMove(moveEvent) {
-      if (!isDragging) return;
-      const moveCoords = getClientCoords(moveEvent);
-      const dx = moveCoords.x - startX;
-      const dy = moveCoords.y - startY;
-
-      let nextX = Math.max(10, initialLeft + dx);
-      let nextY = Math.max(10, initialTop + dy);
-
-      element.style.left = `${nextX}px`;
-      element.style.top = `${nextY}px`;
-      if (moveEvent.cancelable) moveEvent.preventDefault();
-    }
-
-    function onDragEnd(upEvent) {
-      if (!isDragging) return;
-      isDragging = false;
-      element.style.zIndex = element.classList.contains('canvas-note') ? '5' : '10';
-
-      window.removeEventListener('mousemove', onDragMove);
-      window.removeEventListener('mouseup', onDragEnd);
-      window.removeEventListener('touchmove', onDragMove);
-      window.removeEventListener('touchend', onDragEnd);
-
-      const endCoords = getClientCoords(upEvent);
-      const dx = endCoords.x - startX;
-      const dy = endCoords.y - startY;
-      const finalX = Math.max(10, initialLeft + dx);
-      const finalY = Math.max(10, initialTop + dy);
-      onMoveCallback(finalX, finalY);
-    }
-
-    window.addEventListener('mousemove', onDragMove);
-    window.addEventListener('mouseup', onDragEnd);
-    window.addEventListener('touchmove', onDragMove, { passive: false });
-    window.addEventListener('touchend', onDragEnd);
-  }
-
-  element.addEventListener('mousedown', onDragStart);
-  element.addEventListener('touchstart', onDragStart, { passive: true });
+  bindCanvasHandle(moveHandle, element, data, false);
+  bindCanvasHandle(resize, element, data, true);
 }
 
-/* ========================================================= */
-/* Layout Switcher */
-/* ========================================================= */
+function bindCanvasHandle(handle, element, data, resize) {
+  let gesture;
+  const workspace = element.closest('.workspace-container');
+  const scrollOffset = () => [workspace.scrollLeft, window.scrollY];
+
+  function start(clientX, clientY, pointerId) {
+    const items = canvasItems();
+    const anchor = items.find(item => item.key === element.id);
+    const members = items.filter(item => item === anchor || (!resize && data.groupId && item.data.groupId === data.groupId));
+    const initial = new Map(members.map(item => [item.key, canvasBounds(item)]));
+    gesture = { clientX, clientY, pointerId, scroll: scrollOffset(), items, anchor, members, initial, preview: initial };
+  }
+
+  function update(dx, dy) {
+    const { anchor, initial, members, items } = gesture;
+    const origin = initial.get(anchor.key);
+    const left = Math.min(...Array.from(initial.values(), box => box.x));
+    const top = Math.min(...Array.from(initial.values(), box => box.y));
+    const deltaX = Math.max(-left, snapCanvas(origin.x + dx) - origin.x);
+    const deltaY = Math.max(-top, snapCanvas(origin.y + dy) - origin.y);
+    const timer = anchor.type === 'stopwatch';
+    gesture.preview = new Map(members.map(item => {
+      const box = initial.get(item.key);
+      const next = resize
+        ? { ...box, width: dx === 0 ? box.width : snapCanvas(box.width + dx, timer ? 288 : 168),
+                    height: dy === 0 ? box.height : snapCanvas(box.height + dy, timer ? 240 : 96) }
+        : { ...box, x: box.x + (dx === 0 ? 0 : deltaX), y: box.y + (dy === 0 ? 0 : deltaY) };
+      const member = document.getElementById(item.key);
+      if (member) paintCanvasItem(member, next);
+      return [item.key, next];
+    }));
+    fitCanvas(items, gesture.preview);
+  }
+
+  function finish(commit) {
+    const canCommit = commit && element.isConnected && currentLayout === 'canvas';
+    if (canCommit) {
+      for (const item of gesture.members) Object.assign(item.data, gesture.preview.get(item.key));
+      scheduleSave();
+    }
+    gesture = null;
+    element.classList.remove('canvas-manipulating');
+    refreshCanvas();
+  }
+
+  handle.addEventListener('pointerdown', event => {
+    if (gesture || currentLayout !== 'canvas' || event.button !== 0) return;
+    start(event.clientX, event.clientY, event.pointerId);
+    handle.setPointerCapture(event.pointerId);
+    element.classList.add('canvas-manipulating');
+  });
+  function track(event) {
+    const [scrollX, scrollY] = scrollOffset();
+    update(event.clientX - gesture.clientX + scrollX - gesture.scroll[0],
+      event.clientY - gesture.clientY + scrollY - gesture.scroll[1]);
+  }
+  handle.addEventListener('pointermove', event => {
+    if (gesture?.pointerId === event.pointerId && currentLayout === 'canvas') track(event);
+  });
+  handle.addEventListener('pointerup', event => {
+    if (gesture?.pointerId !== event.pointerId) return;
+    if (currentLayout === 'canvas') track(event);
+    finish(true);
+  });
+  for (const type of ['pointercancel', 'lostpointercapture']) {
+    handle.addEventListener(type, event => {
+      if (gesture?.pointerId === event.pointerId) finish(false);
+    });
+  }
+
+  handle.addEventListener('keydown', event => {
+    const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
+    if (!Array.isArray(direction) || gesture || currentLayout !== 'canvas') return;
+    event.preventDefault();
+    start(0, 0, null);
+    update(direction[0] * CANVAS_STEP, direction[1] * CANVAS_STEP);
+    finish(true);
+  });
+}
+
+/* Layout switcher */
 function switchLayout(layout, shouldSave = true) {
+  if (currentLayout !== layout) canvasSelection.clear();
   currentLayout = layout;
   const grid = document.getElementById('grid');
   document.body.classList.toggle('is-canvas-mode', layout === 'canvas');
 
-  // Update button active states
   document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById(`btn-layout-${layout}`)?.classList.add('active');
 
-  grid.classList.remove('layout-inline', 'layout-canvas');
-
-  if (layout === 'inline') {
-    grid.classList.add('layout-inline');
-    // Clear inline absolute positions
-    document.querySelectorAll('.watch-card, .canvas-note').forEach(el => {
-      el.style.left = '';
-      el.style.top = '';
-    });
-  } else if (layout === 'canvas') {
-    grid.classList.add('layout-canvas');
-    // Restore saved coordinates
-    watches.forEach(w => {
-      const card = document.getElementById(`card-${w.id}`);
-      if (card) {
-        card.style.left = `${w.x || 20}px`;
-        card.style.top = `${w.y || 20}px`;
-      }
-    });
-    notes.forEach(n => {
-      const noteEl = document.getElementById(`note-${n.id}`);
-      if (noteEl) {
-        noteEl.style.left = `${n.x || 30}px`;
-        noteEl.style.top = `${n.y || 30}px`;
-      }
-    });
-  } else {
-    // Grid mode
-    document.querySelectorAll('.watch-card, .canvas-note').forEach(el => {
-      el.style.left = '';
-      el.style.top = '';
-    });
-  }
+  grid.classList.toggle('layout-inline', layout === 'inline');
+  grid.classList.toggle('layout-canvas', layout === 'canvas');
+  if (layout !== 'canvas') grid.parentElement.scrollLeft = 0;
+  refreshCanvas();
 
   if (shouldSave) scheduleSave();
 }
@@ -732,8 +800,11 @@ function saveAllState() {
     elapsed: w.elapsed,
     running: w.running,
     startTime: w.running ? w.startTime : null,
-    x: w.x || 20,
-    y: w.y || 20
+    x: w.x ?? CANVAS_STEP,
+    y: w.y ?? CANVAS_STEP,
+    width: w.width ?? null,
+    height: w.height ?? null,
+    groupId: w.groupId ?? null
   }));
 
   const payload = {

@@ -18,6 +18,37 @@ let cloudSyncActive = false;
 let initialCloudCheckComplete = false;
 let saveDebounceTimer = null;
 
+// Alarm Audio Engine
+const ALARM_AUDIO_SRC = 'fairy_fountain.mp3';
+let alarmAudio = null;
+
+function getAlarmAudio() {
+  if (!alarmAudio) {
+    alarmAudio = new Audio(ALARM_AUDIO_SRC);
+    alarmAudio.preload = 'auto';
+  }
+  return alarmAudio;
+}
+
+function playAlarmSound() {
+  try {
+    const audio = getAlarmAudio();
+    audio.currentTime = 0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        console.warn('Audio play prevented or interrupted:', err);
+      });
+    }
+  } catch (err) {
+    console.error('Audio playback error:', err);
+  }
+}
+
+function testAlarmSound() {
+  playAlarmSound();
+}
+
 const THEME_DEFAULTS = {
   dark: {
     '--bg': '#0d1b2a',
@@ -131,7 +162,12 @@ function applyRemoteState(data) {
     watches = [];
     document.querySelectorAll('.watch-card').forEach(c => c.remove());
     data.watches.forEach(w => {
-      const watch = { ...w, interval: null };
+      const watch = {
+        ...w,
+        mode: w.mode || 'stopwatch',
+        alarmPlayed: w.alarmPlayed || false,
+        interval: null
+      };
       watches.push(watch);
       if (watch.id > idCounter) idCounter = watch.id;
       renderCard(watch);
@@ -228,8 +264,10 @@ function addWatch(shouldSave = true) {
     id,
     label: '',
     goal: '',
+    mode: 'stopwatch', // 'stopwatch' | 'timer'
     elapsed: 0,
     running: false,
+    alarmPlayed: false,
     startTime: null,
     interval: null,
     x: defaultX,
@@ -244,7 +282,8 @@ function addWatch(shouldSave = true) {
 function renderCard(watch) {
   const grid = document.getElementById('grid');
   const card = document.createElement('div');
-  card.className = 'watch-card';
+  const mode = watch.mode || 'stopwatch';
+  card.className = `watch-card mode-${mode}`;
   card.id = `card-${watch.id}`;
   card.setAttribute('data-id', watch.id);
 
@@ -267,11 +306,43 @@ function renderCard(watch) {
       <button type="button" class="btn btn-start" id="toggle-${watch.id}" onclick="toggle(${watch.id})">Start</button>
       <button type="button" class="btn btn-reset" onclick="reset(${watch.id})">Reset</button>
     </div>
+    <div class="card-mode-row">
+      <span class="mode-indicator-label" id="mode-label-${watch.id}">${mode === 'timer' ? 'Timer' : 'Stopwatch'}</span>
+      <div class="mode-toggle-group" role="radiogroup" aria-label="Clock Mode">
+        <button type="button" class="mode-btn ${mode === 'stopwatch' ? 'active' : ''}" 
+          id="mode-sw-${watch.id}" onclick="setWatchMode(${watch.id}, 'stopwatch')">Stopwatch</button>
+        <button type="button" class="mode-btn ${mode === 'timer' ? 'active' : ''}" 
+          id="mode-tm-${watch.id}" onclick="setWatchMode(${watch.id}, 'timer')">Timer</button>
+      </div>
+    </div>
   `;
 
   grid.appendChild(card);
   attachCanvasControls(card, watch, card.querySelector('.card-drag-handle'));
   refreshCanvas();
+}
+
+function setWatchMode(id, newMode) {
+  const w = watches.find(w => w.id === id);
+  if (!w || w.mode === newMode) return;
+  w.mode = newMode;
+
+  const card = document.getElementById(`card-${id}`);
+  if (card) {
+    card.classList.remove('mode-stopwatch', 'mode-timer');
+    card.classList.add(`mode-${newMode}`);
+  }
+
+  const btnSw = document.getElementById(`mode-sw-${id}`);
+  const btnTm = document.getElementById(`mode-tm-${id}`);
+  const label = document.getElementById(`mode-label-${id}`);
+
+  if (btnSw) btnSw.classList.toggle('active', newMode === 'stopwatch');
+  if (btnTm) btnTm.classList.toggle('active', newMode === 'timer');
+  if (label) label.textContent = newMode === 'timer' ? 'Timer' : 'Stopwatch';
+
+  updateDisplay(id);
+  scheduleSave();
 }
 
 function escapeHtml(str) {
@@ -290,6 +361,7 @@ function updateWatchGoal(id, val) {
   const w = watches.find(w => w.id === id);
   if (w) {
     w.goal = val;
+    w.alarmPlayed = false; // Reset alarm trigger flag when goal is modified
     updateDisplay(id);
     scheduleSave();
   }
@@ -309,6 +381,12 @@ function toggle(id) {
     w.running = false;
     w.startTime = null;
   } else {
+    // If it's a timer that finished at 0, starting again should restart from full duration
+    const totalGoal = find_time(id);
+    if (w.mode === 'timer' && totalGoal > 0 && w.elapsed >= totalGoal) {
+      w.elapsed = 0;
+      w.alarmPlayed = false;
+    }
     w.startTime = Date.now();
     w.running = true;
     w.interval = setInterval(() => tick(id), 50);
@@ -319,6 +397,35 @@ function toggle(id) {
 }
 
 function tick(id) {
+  const w = watches.find(w => w.id === id);
+  if (!w) return;
+
+  const totalGoal = find_time(id);
+  const currentElapsed = w.elapsed + (w.running ? (Date.now() - w.startTime) : 0);
+
+  // Check goal / target reached
+  if (totalGoal > 0 && currentElapsed >= totalGoal) {
+    if (!w.alarmPlayed) {
+      w.alarmPlayed = true;
+      playAlarmSound();
+    }
+
+    // In Timer mode: stop at zero until clicked Start again
+    if (w.mode === 'timer') {
+      clearInterval(w.interval);
+      w.interval = null;
+      w.elapsed = totalGoal;
+      w.running = false;
+      w.startTime = null;
+      updateToggleBtn(w);
+      document.getElementById(`card-${id}`)?.classList.remove('running');
+      updateDisplay(id);
+      scheduleSave();
+      return;
+    }
+    // In Stopwatch mode: alarm plays once, but stopwatch continues counting!
+  }
+
   updateDisplay(id);
 }
 
@@ -328,8 +435,18 @@ function updateDisplay(id) {
 
   const totalElapsed = w.elapsed + (w.running ? (Date.now() - w.startTime) : 0);
   const totalGoal = find_time(id);
+  const isTimer = w.mode === 'timer';
 
-  const { main, ms } = formatTime(totalElapsed);
+  let displayMs = totalElapsed;
+  if (isTimer) {
+    if (totalGoal > 0) {
+      displayMs = Math.max(0, totalGoal - totalElapsed);
+    } else {
+      displayMs = 0;
+    }
+  }
+
+  const { main, ms } = formatTime(displayMs);
   const disp = document.getElementById(`display-${id}`);
   if (disp) disp.innerHTML = `<span class="time">${main}</span><span class="ms">.${ms}</span>`;
 
@@ -361,6 +478,7 @@ function reset(id) {
   w.elapsed = 0;
   w.running = false;
   w.startTime = null;
+  w.alarmPlayed = false;
 
   updateDisplay(id);
   updateToggleBtn(w);
@@ -797,8 +915,10 @@ function saveAllState() {
     id: w.id,
     label: w.label || '',
     goal: w.goal || '',
+    mode: w.mode || 'stopwatch',
     elapsed: w.elapsed,
     running: w.running,
+    alarmPlayed: w.alarmPlayed || false,
     startTime: w.running ? w.startTime : null,
     x: w.x ?? CANVAS_STEP,
     y: w.y ?? CANVAS_STEP,
@@ -864,7 +984,12 @@ function loadLocalState() {
     try {
       const parsed = JSON.parse(savedWatches);
       parsed.forEach(w => {
-        const watch = { ...w, interval: null };
+        const watch = {
+          ...w,
+          mode: w.mode || 'stopwatch',
+          alarmPlayed: w.alarmPlayed || false,
+          interval: null
+        };
         watches.push(watch);
         if (watch.id > idCounter) idCounter = watch.id;
         renderCard(watch);

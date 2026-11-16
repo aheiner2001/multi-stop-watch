@@ -631,6 +631,134 @@ body.is-canvas-mode .workspace-container {
   /* Subtle styling hint for timer mode */
 }
 
+/* ========================================================= */
+/* Timer Completion Notification Modal */
+/* ========================================================= */
+.timer-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.timer-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.timer-modal-dialog {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 18px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--accent-dim);
+  width: 100%;
+  max-width: 380px;
+  padding: 32px 26px 26px;
+  text-align: center;
+  position: relative;
+  transform: scale(0.92) translateY(12px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timer-modal-backdrop.open .timer-modal-dialog {
+  transform: scale(1) translateY(0);
+}
+
+.timer-modal-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 4px 12px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.timer-modal-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  animation: modalPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes modalPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.14); }
+}
+
+.timer-modal-title {
+  font-family: var(--font-main);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.timer-modal-time {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--text);
+  margin: 10px 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.timer-modal-msg {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin-bottom: 24px;
+}
+
+.timer-modal-actions {
+  width: 100%;
+}
+
+.btn-modal-ack {
+  width: 100%;
+  padding: 13px 20px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-main);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 14px var(--accent-dim);
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.btn-modal-ack:hover {
+  opacity: 0.94;
+}
+
+.btn-modal-ack:active {
+  transform: scale(0.97);
+}
+
+[data-theme="cyber"] .btn-modal-ack {
+  color: #090a0f;
+}
+
 .empty {
   grid-column: 1 / -1;
   text-align: center;

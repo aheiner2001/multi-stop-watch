@@ -96,6 +96,22 @@
   </div>
 </main>
 
+<!-- In-App Timer Completion Notification Modal -->
+<div class="timer-modal-backdrop" id="timer-modal-backdrop">
+  <div class="timer-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="timer-modal-title">
+    <div class="timer-modal-badge" id="timer-modal-badge">TIMER REACHED</div>
+    <div class="timer-modal-icon">🔔</div>
+    <h2 class="timer-modal-title" id="timer-modal-title">Time's Up!</h2>
+    <div class="timer-modal-time" id="timer-modal-time">00:00</div>
+    <p class="timer-modal-msg" id="timer-modal-msg">Your timer has reached its goal.</p>
+    <div class="timer-modal-actions">
+      <button type="button" class="btn-modal-ack" onclick="acknowledgeTimerNotification()">
+        Acknowledge & Dismiss
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Mobile Floating Action Button (Thumb-accessible) -->
 <button type="button" class="mobile-fab" onclick="addWatch()" aria-label="Add Stopwatch">
   <svg width="22" height="22" viewBox="0 0 16 16" fill="none">

@@ -18,9 +18,11 @@ let cloudSyncActive = false;
 let initialCloudCheckComplete = false;
 let saveDebounceTimer = null;
 
-// Alarm Audio Engine
+// Alarm Audio Engine with Smooth Fade-Out
 const ALARM_AUDIO_SRC = 'fairy_fountain.mp3';
 let alarmAudio = null;
+let audioFadeInterval = null;
+let activeNotificationWatchId = null;
 
 function getAlarmAudio() {
   if (!alarmAudio) {
@@ -33,6 +35,11 @@ function getAlarmAudio() {
 function playAlarmSound() {
   try {
     const audio = getAlarmAudio();
+    if (audioFadeInterval) {
+      clearInterval(audioFadeInterval);
+      audioFadeInterval = null;
+    }
+    audio.volume = 1.0;
     audio.currentTime = 0;
     const playPromise = audio.play();
     if (playPromise !== undefined) {
@@ -45,9 +52,108 @@ function playAlarmSound() {
   }
 }
 
+function fadeOutAlarmSound(durationMs = 1500) {
+  const audio = getAlarmAudio();
+  if (!audio || audio.paused || audio.volume <= 0) return;
+
+  if (audioFadeInterval) {
+    clearInterval(audioFadeInterval);
+    audioFadeInterval = null;
+  }
+
+  const stepTime = 50;
+  const steps = Math.max(1, Math.floor(durationMs / stepTime));
+  const volumeDrop = audio.volume / steps;
+
+  audioFadeInterval = setInterval(() => {
+    if (audio.volume > volumeDrop) {
+      audio.volume = Math.max(0, audio.volume - volumeDrop);
+    } else {
+      audio.volume = 0;
+      audio.pause();
+      audio.currentTime = 0;
+      clearInterval(audioFadeInterval);
+      audioFadeInterval = null;
+    }
+  }, stepTime);
+}
+
 function testAlarmSound() {
   playAlarmSound();
+  showTimerNotification(null, {
+    label: 'Test Sound',
+    goal: '10s',
+    mode: 'timer'
+  });
 }
+
+/* ========================================================= */
+/* On-Screen Timer Completion Notification Modal */
+/* ========================================================= */
+function showTimerNotification(watchId, customInfo = null) {
+  const w = watchId ? watches.find(item => item.id === watchId) : customInfo;
+  activeNotificationWatchId = watchId;
+
+  const modal = document.getElementById('timer-modal-backdrop');
+  const titleEl = document.getElementById('timer-modal-title');
+  const badgeEl = document.getElementById('timer-modal-badge');
+  const timeEl = document.getElementById('timer-modal-time');
+  const msgEl = document.getElementById('timer-modal-msg');
+
+  const labelName = (w && w.label && w.label.trim()) ? w.label.trim() : 'Timer';
+  const goalText = (w && w.goal && w.goal.trim()) ? w.goal.trim() : 'Goal reached';
+  const isTimerMode = w ? (w.mode === 'timer') : true;
+
+  if (badgeEl) badgeEl.textContent = isTimerMode ? 'TIMER COMPLETE' : 'STOPWATCH GOAL';
+  if (titleEl) titleEl.textContent = isTimerMode ? `Time's Up!` : `Goal Reached!`;
+  if (timeEl) timeEl.textContent = goalText;
+  if (msgEl) {
+    msgEl.textContent = isTimerMode 
+      ? `"${labelName}" has reached zero and stopped. Click below to acknowledge.`
+      : `"${labelName}" has reached its target of ${goalText}. It will keep running.`;
+  }
+
+  if (modal) {
+    modal.classList.add('open');
+  }
+
+  // Also trigger system/browser notification if permission has been granted
+  if (typeof Notification !== 'undefined') {
+    if (Notification.permission === 'granted') {
+      try {
+        new Notification(isTimerMode ? `Time's Up: ${labelName}` : `Goal Reached: ${labelName}`, {
+          body: `Target: ${goalText}`,
+          icon: 'fairy_fountain.mp3'
+        });
+      } catch (e) {}
+    } else if (Notification.permission === 'default') {
+      try { Notification.requestPermission(); } catch (e) {}
+    }
+  }
+}
+
+function acknowledgeTimerNotification() {
+  const modal = document.getElementById('timer-modal-backdrop');
+  if (modal) {
+    modal.classList.remove('open');
+  }
+
+  // Fade out audio smoothly rather than cutting off abruptly
+  fadeOutAlarmSound(1500);
+
+  activeNotificationWatchId = null;
+}
+
+// Allow pressing Enter or Escape to acknowledge notification
+window.addEventListener('keydown', (e) => {
+  const modal = document.getElementById('timer-modal-backdrop');
+  if (modal && modal.classList.contains('open')) {
+    if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
+      e.preventDefault();
+      acknowledgeTimerNotification();
+    }
+  }
+});
 
 const THEME_DEFAULTS = {
   dark: {
@@ -408,6 +514,7 @@ function tick(id) {
     if (!w.alarmPlayed) {
       w.alarmPlayed = true;
       playAlarmSound();
+      showTimerNotification(id);
     }
 
     // In Timer mode: stop at zero until clicked Start again
